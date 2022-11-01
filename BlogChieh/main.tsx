@@ -12,11 +12,12 @@ blog({
   // footer: <footer>Your custom footer</footer>,
   avatar: "/touxiang.jpeg",
   avatarClass: "rounded-full",
+  dateStyle: "long",
   links: [
     { title: "Email", url: "mailto:chieh504@vip.qq.com" },
     { title: "GitHub", url: "https://github.com/UCanSeeeeee" },
   ],
-  favicon: "favicon.ico",
+  favicon: "icons8-teddy-bear-96.png",
 
   // middlewares: [
 
