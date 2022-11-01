@@ -17,7 +17,7 @@ blog({
     { title: "Email", url: "mailto:chieh504@vip.qq.com" },
     { title: "GitHub", url: "https://github.com/UCanSeeeeee" },
   ],
-  favicon: "icons8-teddy-bear-96.png",
+  favicon: "/icons8-teddy-bear-48.png",
 
   // middlewares: [
 
