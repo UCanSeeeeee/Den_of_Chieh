@@ -14,7 +14,7 @@ blog({
   avatarClass: "rounded-full",
   dateStyle: "long",
   links: [
-    { title: "Email", url: "mailto:chieh504@vip.qq.com" },
+    { title: "Email", url: "mailto:chieh504@qq.com" },
     { title: "GitHub", url: "https://github.com/UCanSeeeeee" },
   ],
   favicon: "/icons8-teddy-bear-48.png",
