@@ -3,8 +3,12 @@ title: 资源整合
 publish_date: 2023-04-01
 ---
 
+补充请与作者联系
+
 电子书：https://zhelper.net/
+
 电影片源：https://yiso.fun/
+
 Mac软件：https://www.macyy.cn/
 
 免责声明：
