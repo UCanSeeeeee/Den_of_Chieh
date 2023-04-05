@@ -1,5 +1,5 @@
 ---
-title: iOS纯代码模式开发
+title: iOS纯代码模式开发&混编
 publish_date: 2022-12-26
 ---
 
@@ -50,3 +50,11 @@ Pure development！
     window?.rootViewController = MainTabBarViewController()
     window?.makeKeyAndVisible()
 ```
+
+## 在Swift中写Objective-c
+
+1.创建oc文件，在弹窗中选择"Create Bridging Header" 。
+
+2.在生成的文件中导入oc类头文件。 // "#import xxx.h"
+
+3.在Swift中直接使用。
