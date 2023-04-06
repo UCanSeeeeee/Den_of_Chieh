@@ -1,5 +1,5 @@
 ---
-title: 想记就记
+title: 多余的话
 publish_date: 2023-02-10
 ---
 
