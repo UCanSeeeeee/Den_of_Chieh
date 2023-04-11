@@ -18,6 +18,7 @@ objc
 已配置好的源码github地址：https://github.com/LGCooci/KCCbjc4_debug
 
 ---
+
 ## 可能遇到的问题：
 
 ```
@@ -25,3 +26,16 @@ objc
 Target -> 自己创建的项目 -> 在General - Frameworks and Libraries中添加目标库（例如：libobjc.A.dylib）
 Target -> 自己创建的项目 -> 将ild Phases - Compile Sources中的mail.m放到第一位
 ```
+
+---
+
+## 参考资料
+
+- [掘金：我是好宝宝](https://juejin.cn/post/6844904025985384462)
+- [style_月月](https://juejin.cn/post/6949574423837933575)
+- [Tino博客](https://tinowu.top)
+
+---
+
+## oc转cpp
+`xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainBlock.cpp`
