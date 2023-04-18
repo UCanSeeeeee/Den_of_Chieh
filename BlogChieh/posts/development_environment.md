@@ -7,6 +7,17 @@ publish_date: 2023-04-05
 
 // 最下面有些已经失效+无用 读者自行把握
 
+# 终端命令
+`echo $PATH`看环境资源
+`cd ~`移动到根目录
+`open .`打开此目录的文件夹
+`ls`目录列表
+`ctrl + c`停止
+`sudo`管理员身份运行
+`which xxx`看位置
+`deno task dev` 博客
+`pmset -g log` 唤醒日志
+
 # 开发
 ```
 - Xcode + SF符号 + Cursor + VSCode + ClashX Pro / Shadowsocks
