@@ -184,7 +184,7 @@ git rebase xxx // 分支名字 merge
 
 ---
 
-#### tag // 版本控制,相当于commit id
+### tag // 版本控制,相当于commit id
 
 ```
 (1)  
@@ -197,17 +197,46 @@ git tag 2.0.0 -m ''
 
 ---
 
+### 更改仓库名
+
+`git remote set-url origin new_url`
+
+---
+
+---
+
 ### 解决冲突  // 结果是两次commit.  
 
 ```
-// git push 未成功后  
+// git push 未成功
 git pull // 提示出现冲突  
-解冲突  
+// 解冲突 
 git add .  
 git commit -m ''  
 git push  
 ```
 
+### 冲突时处理
+
+情况一：git pull时本地分支和远程分支有不同的修改
+
+```
+方法一：丢弃本地代码
+git reset --hard
+git pull
+```
+
+```
+方法二：使用git stash
+```
+git stash // 将修改存储到一个临时的存储区中
+git pull 
+git stash pop // 将之前使用git stash命令存储的修改还原回来
+
+/*
+git stash list 看本地stash列表
+git stash clear 清空stash
+*/
 ---
 
 ### 未知解决冲突的知识点(先记录一下，用到的时候再重写这一部分)  
