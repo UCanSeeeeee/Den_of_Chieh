@@ -108,5 +108,5 @@ purex洗衣液
 香奈儿小黑管
 晶刚啫喱膏
 宜家香包
-linefriend钥匙扣
+linefriends钥匙扣
 ```
