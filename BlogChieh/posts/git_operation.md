@@ -132,6 +132,15 @@ git push
 
 ---
 
+### 撤回
+
+```
+git reset // 将暂存区的修改移除
+git checkout -- . // 将工作区的修改还原到上一次提交的状态，可以将“.”替换为某个文件名
+
+```
+---
+
 ### 从github拉取仓库: // 本地未init  
 
 ```
@@ -227,8 +236,15 @@ git pull
 ```
 
 ```
-方法二：使用git stash
+方法二：先提交修改但不push
+git add .
+git commit -m "Your commit message"
+git pull
+// 这个命令会将你的修改添加到暂存区，然后提交一个新的本地提交。接下来，它会尝试将远程分支合并到你的本地分支中。
 ```
+
+```
+方法三：使用git stash
 git stash // 将修改存储到一个临时的存储区中
 git pull 
 git stash pop // 将之前使用git stash命令存储的修改还原回来
@@ -237,6 +253,8 @@ git stash pop // 将之前使用git stash命令存储的修改还原回来
 git stash list 看本地stash列表
 git stash clear 清空stash
 */
+```
+
 ---
 
 ### 未知解决冲突的知识点(先记录一下，用到的时候再重写这一部分)  
