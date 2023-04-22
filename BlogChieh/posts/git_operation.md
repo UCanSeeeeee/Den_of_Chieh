@@ -85,6 +85,8 @@ pod install
 
 参考资料：
 
+[清华硕士谭新宇](https://github.com/OneSizeFitsQuorum/git-tips)
+
 [正确的github工作流](https://www.bilibili.com/video/BV19e4y1q7JJ/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=64a015eda4e3444c64508773171accf2)
 
 [BBCo](https://www.bilibili.com/video/BV1cS4y1U7uL/?spm_id_from=333.999.0.0&vd_source=64a015eda4e3444c64508773171accf2)

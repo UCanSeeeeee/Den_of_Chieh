@@ -42,6 +42,8 @@ publish_date: 2023-04-05
 - AnyGo 修改定位
 - ChatGPT 客户端
 - Telegram + 阿里云盘
+- Alfred 聚焦
+- magnet 窗口管理
 ```
 ---
 # 电脑设置
