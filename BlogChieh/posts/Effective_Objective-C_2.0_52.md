@@ -22,7 +22,7 @@ Objective-C 为 C 语言添加了面向对象的特性，是 C 的超集。C 语
 
 #### 二、运行期组件
 
-Objective-C 的重要工作都由 “运行期组件”（runtime component) 而非编译器来完成。使用 Objective-C 的面向对象特性所需的全部数据结构及函数都在运行期组件里面。
+Objective-C 的重要工作都由 “运行期组件”（runtime component） 而非编译器来完成。使用 Objective-C 的面向对象特性所需的全部数据结构及函数都在运行期组件里面。
 
 举例来说，运行期组件中含有全部内存管理方法。运行期组件本质上就是一种与开发者所编代码相链接的“动态库”（dynamic library），其代码能把开发者编写的所有程序粘合起来。这样的话，只需更新运行期组件，即可提升应用程序性能。而那种许多工作都在“编译期” (compile time) 完成的语言，若想获得类似的性能提升，则要重新编译应用程序代码。
 
@@ -74,4 +74,133 @@ CGRect 是C结构体，其定义是：
 
 ---
 
-### 
+### 第3条：多用字面量语法，少用与之等价的方法
+
+字面量语法（一种语法糖：指编程语言中可以更容易的表达一个操作的语法）：`NSString *someString = @"Effective objective-c 2.0";`
+
+#### 字面量数值
+
+```
+NSNumber *someNumber = [NSNumber numberWithInt:1];
+NSNumber *someNumber = @1;
+// 字面量语法更简洁
+```
+
+有时需要把整数、浮点数、布尔值封入 Objective-C 对象中。这种情况下可以用 NSNumber 类，该类可处理多种类型的数值。能够以 NSNumber 实例表示的所有数据类型都可使用该语法。
+```
+NSNumber *intNumber = @1;
+NSNumber *floatNumber = @2.5f;
+NSNumber *doubleNumber = @3.14159;
+NSNumber *boolNumber = @YES;
+NSNumber *charNumber = @'a';
+```
+
+#### 字面量数组
+
+example
+
+```
+NSArray *animals = [NSArray arrayhithobjects:@"cat", @"dog", @"mouse", @"badger", nil];
+NSString *dog = [animals objectAtIndex : 1];
+
+NSArray *animals = @[@"cat"', @"dog", @"mouse"', @"badger"];
+NSString *dog = animals[1];
+```
+
+如果object2是nil，则arrayA只有object1一个对象，创建arrayB时会抛出异常。原因在于：“arrayWithObjects:” 方法会依次处理各个参数，直到发现 nil 为止，由于object2是nil，所以该方法会提前结束。由此可见，使用字面量语法更为安全。
+
+```
+id objectl = /**/;
+id object2 = /**/;
+id object3 = /**/;
+NSArray *arrayA = [NSArray array WithObjects:object1, object2, object3, nil];
+NSArray *arrayB = @[object1, object2, object3];
+```
+
+#### 字面量字典
+
+example
+
+```
+NSDictionary *personData = [NSDictionary dictionaryWithObjectsAndKeys:@"Matt", @"firstName",@"Galloway", @"lastName", @28, @"age", nil];
+NSString *lastName = [personData objectForKey:@"lastName"];
+
+NSDictionary *personData =@[@"firstName": @"'Matt", @"lastName": @"Galloway", @"age": @28];
+NSString * lastName = personData[@"lastName"]；
+```
+
+#### 可变数组与字典
+
+通过取下标操作，可以访问数组中某个下标或字典中某个键所对应的元素。如果数组与字典对象是可变的（mutable），那么也能通过下标修改其中的元素值。
+
+```
+[mutableArray replaceObjectAtIndex:1 withObiect:@"dog"];
+[mutableDictionary setObject:@"Galloway" forkey:@"lastName"];
+
+mutableArray[1] =@"dog";
+mutableDictionary[@"lastName"]= @"Galloway";
+```
+
+#### 局限性
+
+使用宇面量语法创建出来的宇符串、数组、字典对象都是不可变的（immutable）。若想要可变版本的对象，则需复制一份：`NSMutableArray *mutable = [@[@1, @2, @3, @4,@5] mutableCopy];`这么做会多调用一个方法，而且还要再创建一个对象，不过使用字面量语法所带来的好处还是多于上述缺点的。
+
+---
+
+### 第4条：多用类型常量，少用 #define 预处理指令
+
+宏定义大家应该都不陌生，使用起来非常简单，首先我们先来看一下宏定义（#define）跟const的区别：
+
+```
+1.宏在编译开始之前就会被替换，而const只是变量进行修饰;
+2.宏可以定义一些函数方法，const不能
+3.宏编译时只替换不做检查不报错，也就是说有重复定义问题。而const会编译检查，会报错
+```
+
+编写代码时经常要定义常量，比如`#define ANIMATION_DURATION 0.3`，该预处理指令会把源代码中的 ANIMATION_DURATION 字符串替换为0.3。可是这样定义出来的常量没有类型信息，假设此指令声明在某个头文件中，那么所有引人了这个头文件的代码，其 ANIMATION_DURATION 都会被替换。有个办法比用预处理指令来定义常量更好，比如`static const NSTimeInterval kAnimationDuration = 0.3;`
+
+定义**不对外公开的常量**的时候，我们应该尽量先考虑使用static方式声名const来替代使用宏定义。const不能满足的情况再考虑使用宏定义。比如用以下定义：
+
+```
+static NSString * const kConst = @"Hello"； // 代替 -> #define DEFINE @"Hello"
+static const CGFloat kWidth = 10.0; // 代替 -> #define WIDTH 10.0
+```
+
+定义**对外公开的常量**的时候，我们一般使用如下定义：
+
+```
+// .h
+extern NSString *const CLASSNAMEconst;
+// .m
+NSString *const CLASSNAMEconst = @"hello";
+```
+
+对于整型类型，代替宏定义直接定义整型常量比较好的办法是使用enum，使用enum时推荐使用NS_ENUM和NS_OPTIONS宏。比如用以下定义：
+
+```
+typedef NS_ENUM(NSInteger,TestEnum) {
+        MY_INT_CONST = 12345
+}; // 代替 -> #define MY_INT_CONST 12345
+```
+
+const 的一些使用方式和写法区别：
+
+```
+const NSString *constString1 = @"I am a const NSString * string";
+NSString const *constString2 = @"I am a NSString const * string";
+// 全局变量，constString1地址不能修改，constString1值能修改。
+
+NSString *const stringConst = @"I am a NSString * const string";
+// stringConst 地址能修改，stringConst值不能修改。
+
+static const NSString *staticConstString1 = @"I am a static const NSString * string";
+static NSString const *staticConstString2 = @"I am a static NSString const * string";
+// 局部常量，作用域只在本文件中。
+```
+
+```
+＊左边代表指针本身的类型信息，const表示这个指针指向的这个地址是不可变的。
+＊右边代表指针指向变量的可变性，即指针存储的地址指向的内存单元所存储的变量的可变性。
+```
+
+---
