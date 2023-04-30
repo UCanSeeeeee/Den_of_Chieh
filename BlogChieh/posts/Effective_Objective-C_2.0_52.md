@@ -147,9 +147,9 @@ mutableDictionary[@"lastName"]= @"Galloway";
 
 ---
 
-### 第4条：多用类型常量，少用 #define 预处理指令
+### 第4条：多用类型常量，少用 #define 预处理指令 & 第5条：多用枚举表示状态、选项、状态码
 
-宏定义大家应该都不陌生，使用起来非常简单，首先我们先来看一下宏定义（#define）跟const的区别：
+#### 宏定义大家应该都不陌生，使用起来非常简单，首先我们先来看一下宏定义（#define）跟const的区别：
 
 ```
 1.宏在编译开始之前就会被替换，而const只是变量进行修饰;
@@ -159,14 +159,14 @@ mutableDictionary[@"lastName"]= @"Galloway";
 
 编写代码时经常要定义常量，比如`#define ANIMATION_DURATION 0.3`，该预处理指令会把源代码中的 ANIMATION_DURATION 字符串替换为0.3。可是这样定义出来的常量没有类型信息，假设此指令声明在某个头文件中，那么所有引人了这个头文件的代码，其 ANIMATION_DURATION 都会被替换。有个办法比用预处理指令来定义常量更好，比如`static const NSTimeInterval kAnimationDuration = 0.3;`
 
-定义**不对外公开的常量**的时候，我们应该尽量先考虑使用static方式声名const来替代使用宏定义。const不能满足的情况再考虑使用宏定义。比如用以下定义：
+#### 定义**不对外公开的常量**的时候，我们应该尽量先考虑使用static方式声名const来替代使用宏定义。const不能满足的情况再考虑使用宏定义。比如用以下定义：
 
 ```
 static NSString * const kConst = @"Hello"； // 代替 -> #define DEFINE @"Hello"
 static const CGFloat kWidth = 10.0; // 代替 -> #define WIDTH 10.0
 ```
 
-定义**对外公开的常量**的时候，我们一般使用如下定义：
+#### 定义**对外公开的常量**的时候，我们一般使用如下定义：
 
 ```
 // .h
@@ -175,15 +175,53 @@ extern NSString *const CLASSNAMEconst;
 NSString *const CLASSNAMEconst = @"hello";
 ```
 
-对于整型类型，代替宏定义直接定义整型常量比较好的办法是使用enum，使用enum时推荐使用NS_ENUM和NS_OPTIONS宏。比如用以下定义：
+#### 对于整型类型，代替宏定义直接定义整型常量比较好的办法是使用enum。
+
+使用enum时推荐使用NS_ENUM和NS_OPTIONS宏，并指明其底层数据类型。这样做可以确保枚举是用开发者所选的底层数据类型实现出来的，而不会采用编译器所选的类型。比如用以下定义：
 
 ```
 typedef NS_ENUM(NSInteger,TestEnum) {
         MY_INT_CONST = 12345
-}; // 代替 -> #define MY_INT_CONST 12345
+}; // 代替 -> #define MY_INT_CONST 12345 
+// 该宏展开后为：typedef enum TestEnum: NSInterger TestEnum;
 ```
 
-const 的一些使用方式和写法区别：
+```
+// 如果把传递给某个方法的选项表示为枚举类型，而多个选项又可同时使用，那么就将各选项值定义为2的幂，以便通过按位或操作将其组合起来。
+typedef NS_OPTIONS(NSInteger, SelectType) {
+        SelectA = 0,
+        SelectB = 1 << 0,
+        SelectC = 1 << 1,
+        SelectD = 1 << 2
+};
+```
+
+这里为什么会出现NS_ENUM和NS_OPTIONS且为什么不直接一个就行？根据**是否将代码按照C++模式编译**，若是不按照C++模式编译，NS_ENUM和NS_OPTIONS展开方式就一样，若是要按照C++模式编译，就不同了。在使用**或运算**操作**两个枚举值**时，C++认为 运算结果的数据类型 应该是 枚举的底层数据类型，也就是NSUInteger，且C++不允许将这个底层类型“隐式转换”为枚举类型本身，所以C++模式下定义了NS_OPTIONS宏，以便省去类型转换操作。
+
+鉴于此，凡是需要以**按位或操作**来组合的枚举都应使用NS_OPTIONS定义。若是枚举不需要互相组合，则应使用NS_ENUM来定义。
+
+**在处理枚举类型的switch语向中不要实现default分支。这样的话，加入新枚举之后，编译器就会提示开发者：switch语向并未处理所有枚举。**
+
+```
+typedef NS_ENUM(NSUInteger, EOCConnectionState){
+    EOCConnectionStateDisconnected, 
+    EOCConnectionStateConnecting, 
+    EOCConnectionStateConnected,
+};
+switch (_currentState) {
+    EOCConnectionStateDisconnected:
+    // Handle disconnected state 
+    break;
+    EOCConnectionStateConnecting:
+    // Handle connecting state 
+    break;
+    EOCConnectionStateConnected:
+    // Handle connected state 
+    break;
+}
+```
+
+#### const 的一些使用方式和写法区别：
 
 ```
 const NSString *constString1 = @"I am a const NSString * string";
@@ -202,5 +240,11 @@ static NSString const *staticConstString2 = @"I am a static NSString const * str
 ＊左边代表指针本身的类型信息，const表示这个指针指向的这个地址是不可变的。
 ＊右边代表指针指向变量的可变性，即指针存储的地址指向的内存单元所存储的变量的可变性。
 ```
+
+---
+
+### 第6条：理解“属性”这一概念
+
+
 
 ---
