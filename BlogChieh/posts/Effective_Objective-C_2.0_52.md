@@ -245,6 +245,6 @@ static NSString const *staticConstString2 = @"I am a static NSString const * str
 
 ### 第6条：理解“属性”这一概念
 
-
+2023-05-02 02:23:26 +0800 Assertions          	PID 190(coreaudiod) Released PreventUserIdleDisplaySleep "com.apple.audio.context5485.preventuseridledisplaysleep" 00:02:36  id:0x0x500009d61 [System: PrevSleep kCPU]
 
 ---
