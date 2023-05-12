@@ -280,7 +280,7 @@ Chieh's Den
 
 ![](/self_photo/8781683552088_.pic.jpg)
 
-![](/self_photo/8821683875529_.pic.jpg)
+![](/self_photo/8801683875528_.pic.jpg)
 
 ![](/self_photo/8811683875529_.pic.jpg)
 
