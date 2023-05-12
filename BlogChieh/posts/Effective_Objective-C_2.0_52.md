@@ -6,6 +6,9 @@ publish_date: 2023-04-17
 注视一个物品半分钟再开始读书
 
 ---
+
+# 第1章 熟悉Objective-C
+
 ### 第1条：了解 Objective-C 语言的起源
 
 Objective-C 语言由 Smalltalk 演化而来，后者是消息型语言的鼻祖。
@@ -243,8 +246,75 @@ static NSString const *staticConstString2 = @"I am a static NSString const * str
 
 ---
 
+# 第2章 对象、消息、运行期
+
+对象（object）：就是“基本构造单元”（buildingblock），开发者可以通过对象来存储并传递数据。
+
+消息传道（Messaging）：在对象之间传递数据并执行任务的过程。
+
+Objective-C运行期环境：当应用程序运行起来以后，为其提供相关支持的代码。它提供了一些使得对象之间能够传递消息的重要函数，并且包含创建类实例所用的全部逻辑。
+
 ### 第6条：理解“属性”这一概念
 
-2023-05-02 02:23:26 +0800 Assertions          	PID 190(coreaudiod) Released PreventUserIdleDisplaySleep "com.apple.audio.context5485.preventuseridledisplaysleep" 00:02:36  id:0x0x500009d61 [System: PrevSleep kCPU]
+1.定义对外开放的属性时候尽量做到**暴露权限最小化**，不希望被修改的属性要加上readonly。
+
+2.atomic并不能保证多线程安全，例如一个线程连续多次读取某个属性的值，而同时还有别的线程在修改这个属性值得时候，也还是一样会读到不同的值。atomic的原理只是在setter and getter方法中加了一个@synchronized(self)，所以iOS开发中属性都要声明为nonatomic,因为atomic严重影响了性能，但是在Mac_OS_X上开发却通常不存在这个性能问题。
+
+[属性修饰符的属性和具体使用请看这章](https://chiehwang.top/oc_foundation)
+
+---
+
+### 第7条：在对象内部尽量直接访问实例变量
+
+实例变量（_属性名）访问对象的场景：
+
+```
+- 在init和dealloc方法中，总是应该通过访问实例变量读写数据
+- 没有重写getter和setter方法、也没有使用KVO监听
+好处：不走OC的方法派发机制，直接访问内存读写，速度快，效率高。
+```
+
+```
+- (instancetype)initWithDic:(NSDictionary *)dic {
+    self = [super init];
+    if (self) {   
+        _qi = dic[@"qi"];
+        _share = dic[@"share"];
+    }
+    return self;
+}
+```
+
+用存取方法访问对象的场景：
+
+```
+- 重写了getter/setter方法（比如：懒加载）
+- 使用了KVO监听值的改变
+```
+
+```
+- (UIView *)qiShareView {
+    if (!_qiShareView) {
+        _qiShareView = [UIView new];
+    }
+    return _qiShareView;
+}
+```
+
+---
+
+### 第8条：理解“对象等同性”这一概念
+
+思考下面输出什么？
+
+```
+    NSString *aString = @"iphone 8";
+    NSString *bString = [NSString stringWithFormat:@"iphone %i", 8];
+    NSLog(@"%d", [aString isEqual:bString]);
+    NSLog(@"%d", [aString isEqualToString:bString]);
+    NSLog(@"%d", aString == bString);
+```
+
+答案是110，**==**操作符只是比较了两个指针（内存地址）是否相等，而不是指针所指的对象
 
 ---
