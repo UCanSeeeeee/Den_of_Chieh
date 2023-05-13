@@ -318,3 +318,21 @@ Objective-C运行期环境：当应用程序运行起来以后，为其提供相
 答案是110，**==**操作符只是比较了两个指针（内存地址）是否相等，而不是指针所指的对象
 
 ---
+
+### 第9条：以“类族模式”隐藏实现细节
+
+NSArray *array = [[NSArray alloc] init];
+if ([array isMemberOfClass:[NSArray class]]) {
+    NSLog(@"isMemberOfClass");
+}
+
+NSArray *array = [[NSArray alloc] init];
+ if ([array isKindOfClass:[NSArray class]]) {
+    NSLog(@"isKindOfClass");
+}
+
+---
+
+---
+
+---
