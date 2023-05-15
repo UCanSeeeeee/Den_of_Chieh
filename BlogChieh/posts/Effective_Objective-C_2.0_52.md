@@ -305,31 +305,297 @@ Objective-C运行期环境：当应用程序运行起来以后，为其提供相
 
 ### 第8条：理解“对象等同性”这一概念
 
-思考下面输出什么？
+#### 同等性判断 ==
+
+（1）对于对象类型，“**==**”操作符只是比较了两个指针（内存地址）是否相等，即是否为同一个对象。
 
 ```
-    NSString *aString = @"iphone 8";
-    NSString *bString = [NSString stringWithFormat:@"iphone %i", 8];
-    NSLog(@"%d", [aString isEqual:bString]);
-    NSLog(@"%d", [aString isEqualToString:bString]);
-    NSLog(@"%d", aString == bString);
+NSString *str = @"test1";
+NSString *strCopy = [str copy];
+NSString *strNew = [NSString stringWithFormat:@"test%@", @1];
+
+BOOL equalA = (str == strCopy); // YES
+BOOL equalB = (str == strNew);  // NO
 ```
 
-答案是110，**==**操作符只是比较了两个指针（内存地址）是否相等，而不是指针所指的对象
+（2）对于基本类型，“**==**”比较的是值。
+
+```
+NSInteger x = 123;
+NSInteger y = 123;
+NSInteger z = 1234;
+
+BOOL equal0 = (x == y); // YES
+BOOL equal1 = (x == z);  // NO
+```
+
+#### 同等性判断 isEqual
+
+（1）isEqual：NSObject 协议中声明的方法来判断两个对象的等同性，可直接使用
+
+```
+NSString *str = @"test1";
+NSString *strNew = [NSString stringWithFormat:@"test%@", @1];
+
+BOOL equalD = [str isEqual:strNew]; // YES 
+```
+
+（2）iOS系统已经实现了部分NSObject子类的isEqual方法，可直接使用
+
+```
+NSString - isEqualToString
+NSArray - isEqualToArray
+NSDictionary - isEqualToDictionary
+NSSet - isEqualToSet
+```
+
+（3）对于自定义的类型来说，需要重写isEqual方法：
+
+```
+//重写系统的isEqual
+- (BOOL)isEqual:(id)object {
+    //Step 1: ==运算符判断是否是同一对象, 因为同一对象必然完全相同
+    if (self == object) {
+        return YES;
+    }
+    //Step 2: 判断是否是同一类型, 这样不仅可以提高判断的效率, 还可以避免隐式类型转换带来的潜在风险
+    if (![object isKindOfClass:[Person class]]) {
+        return NO;
+    }
+    //Step 3: 通过封装的isEqualToPerson方法, 提高代码复用性
+    return [self isEqualToPerson:(Person *)object];
+}
+
+//自定义方法来执行有意义的值比较
+- (BOOL)isEqualToPerson:(Person *)person {
+    //Step 4: 判断person是否是nil, 做参数有效性检查
+    if (!person) {
+        return NO;
+    }
+    //Step 5: 对各个属性分别使用默认判等方法进行判断
+    BOOL haveEqualNames = (!self.name && !person.name) || [self.name isEqualToString:person.name];
+    BOOL haveEqualBirthdays = (!self.birthday && !person.birthday) || [self.birthday isEqualToDate:person.birthday];
+    //Step 6: 返回所有属性判等的与结果
+    return haveEqualNames && haveEqualBirthdays;
+}
+
+```
 
 ---
 
 ### 第9条：以“类族模式”隐藏实现细节
 
+#### 一、创建类族
+
+假设有一个处理雇员的类，每个雇员都有“名字” 和 “薪水”这两个属性，管理者可以命令其执行日常工作。但是，各种雇员的工作内容不同。经理在带领雇员做项目时，无须关心每个人如何完成其工作，仅需指示其开工即可。
+
+首先要定义抽象基类：
+
+```
+typedef NS_ENUM(NSUInteger, EOCEmployeeType) {
+    EOCEmployeeTypeDeveloper,
+    EOCEmployeeTypeDesiner,
+    EOCEmployeeTypeFinance
+};
+
+@interface EOCEmployee : NSObject
+
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, assign) NSUInteger salary;
+
++ (EOCEmployee *)employeeWithType:(EOCEmployeeType)type;
+
+- (void)doADaysWork;
+
+@end
+```
+
+```
+@implementation EOCEmployee
+
++ (EOCEmployee *)employeeWithType:(EOCEmployeeType)type {
+    switch (type) {
+        case EOCEmployeeTypeDeveloper:
+            return [EOCEmployeeTypeDeveloper new];
+            break;
+            
+        case EOCEmployeeTypeDesiner:
+            return [EOCEmployeeTypeDesiner new];
+            break;
+            
+        case EOCEmployeeTypeFinance:
+            return [EOCEmployeeTypeFinance new];
+            break;
+    }
+}
+
+- (void)doADaysWork {
+    // Subclasses implement this.
+}
+
+@end
+```
+
+每个“实体子类”都从基类继承而来。例如：
+
+```
+@interface EOCEmployeeTypeDeveloper : EOCEmployee
+@end
+
+@implementation EOCEmployeeTypeDeveloper
+- (void)doADaysWork {
+        [self writeCode];
+}
+@end
+
+```
+
+在本例中，实现了一个“类方法”，该方法**根据待创建的雇员类别分配好对应的雇员类实例**。如果对象所属的类位于某个类族中，那么在查询其类型信息时就要当心了。你**可能觉得自己创建了某个类的实例，然而实际上创建的却是其子类的实例**。在上例中，[employee is**Member**OfClass:[EOCEmployee class]]似乎会返回YES，但实际是NO，因为employee并非Employee类的实例，而是其某个子类的实例。
+
+#### 二、以NSArray为例，深入理解“类族”
+
+```
+NSArray *array = [[NSArray alloc] init];
+if ([array class] == [NSArray class]) {  
+    NSLog(@"arrayClass == NSArrayClass");
+    // 无打印
+}  
+
 NSArray *array = [[NSArray alloc] init];
 if ([array isMemberOfClass:[NSArray class]]) {
     NSLog(@"isMemberOfClass");
+    // 无打印
 }
 
 NSArray *array = [[NSArray alloc] init];
  if ([array isKindOfClass:[NSArray class]]) {
     NSLog(@"isKindOfClass");
+    // 打印 isKindOfClass
 }
+
+NSArray *array = [[NSArray alloc] init];
+NSLog(@"%@",[[array class] debugDescription]);
+    // 打印 __NSArray0
+NSLog(@"%@",[[array superclass] debugDescription]);
+    // 打印 NSArray
+```
+
+```
+（1）isMemberOfClass：判断是否是这个类的实例
+（2）isKindOfClass：判断是否是这个类或者这个类的子类的实例
+```
+
+---
+
+### 第10条：在既有类中使用关联对象存放自定义数据
+
+```
+   /** 参数含义：
+     id object：被关联的对象（如xiaoming）
+     const void *key：关联的key，要求唯一
+     id value：关联的对象（如dog）
+     objc_AssociationPolicy policy：内存管理的策略
+    */
+// 1>将object和value关联在一起：
+void objc_setAssociatedObject(id object, const void *key, id value, objc_AssociationPolicy policy)
+
+// 2>根据key值获取关联对象
+id objc_getAssociatedObject(id object, const void *key);
+
+// 3>移除所有关联对象
+void objc_removeAssociatedObjects(id object);
+
+```
+
+应用举例，使用block去实现button的点击回调：
+
+```
+// .h
+  // 1>声明一个button点击事件的回调block
+typedef void(^ButtonClickCallBack)(UIButton *button);
+  // 2>为UIButton增加的回调方法
+- (void)handleClickCallBack:(ButtonClickCallBack)callBack;
+
+// .m
+   // 实现回调方法
+- (void)handleClickCallBack:(ButtonClickCallBack)callBack {   
+
+    objc_setAssociatedObject(self, &buttonClickKey, callBack, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    [self addTarget:self action:@selector(buttonClicked) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)buttonClicked {
+
+    ButtonClickCallBack callBack = objc_getAssociatedObject(self, &buttonClickKey);
+
+    if (callBack) {
+        callBack(self);
+    }
+}
+
+// 具体调用：
+[self.testButton handleClickCallBack:^(UIButton *button) {
+        NSLog(@"click...");
+}];
+```
+
+用关联对象可能会引入难于查找的bug，毕竟是在runtime阶段，所以可能要看情况谨慎选择
+
+---
+
+### 第11条：理解“objc_msgSend”的作用
+
+之前在**了解Objective-C语言的起源**有提到过，Objective-C是用的消息结构。这条就是让你理解一下怎么传递的消息。
+
+在Objective-C中，如果向某个对象传递消息，那就会在运行时使用动态绑定（dynamic binding）机制来决定需要调用的方法。但是到了底层具体实现，却是普通的C语言函数实现的。这个实现的函数就是objc_msgSend,该函数定义如下：
+
+`void objc_msgSend(id self, SEL cmd, ...) `
+
+这是一个参数个数可变的函数，第一参数代表接收者，第二个参数代表选择子（OC函数名），后续的参数就是消息（OC函数调用）中的那些参数。
+
+举例：
+
+```
+id return = [git commit:parameter];
+id return = objc_msgSend(git, @selector(commit), parameter);
+```
+
+objc_msgSend函数会在接收者所属的类中搜寻其方法列表，如果能找到这个跟选择子名称相同的方法，就跳转到其实现代码，往下执行。若是当前类没找到，那就沿着继承体系继续**向上**查找，等找到合适方法之后再跳转 ，如果最终还是找不到，那就进入消息转发的流程去进行处理了。
+
+特殊情况：
+
+```
+objc_msgSend_stret：如果待发送的消息要返回结构体，那么可交由此函数处理。
+objc_msgSend_fpret：如果消息返回的是浮点数，那么交由此函数处理。
+objc_msgSendSuper：如果要给超类发消息，例如[super message:parameter]，那么就交由此函数处理。
+```
+
+优化：
+
+1.说过了OC的函数调用实现，你会觉得消息转发要处理很多，尤其是在搜索上，幸运的是objc_msgSend在搜索这块是有做缓存的，每个OC的类都有一块这样的缓存，objc_msgSend会将匹配结果缓存在**快速映射表(fast map)**中，这样以来这个类一些频繁调用的方法会出现在fast map 中，不用再去一遍一遍的在方法列表中搜索了。
+
+2.还有一个有趣的点，就是在底层处理发送消息的时候，有用到**尾调用优化**，大概原理就是在函数末尾调用某个不含返回值函数时，编译器会自动的不在栈空间上重新进行分配内存，而是直接释放所有调用函数内部的局部变量，然后直接进入被调用函数的地址。
+
+---
+
+### 第12条：理解消息转发机制
+
+iOS开发过程中我们经常会碰到这样的报错：`reason: '-[People doesNotExist]: unrecognized selector sent to instance 0x6000021e4640'`，原因是我们调用了一个不存在的方法。用OC消息机制来说就是：消息的接收者不过到对应的selector，这样就启动了消息转发机制，我们可以通过代码在消息转发的过程中告诉对象应该如何处理未知的消息。
+
+1. 方法解析：首先，Objective-C运行时会调用对象的+resolveInstanceMethod:或+resolveClassMethod:方法，尝试动态地为该消息添加一个方法实现。如果该方法实现被成功添加，那么消息就会被重新发送，这次能够被对象响应。
+
+2. 快速转发：如果方法解析失败，Objective-C运行时会尝试将消息转发给一个备用接收者。备用接收者是一个实现了-forwardingTargetForSelector:方法的对象，该方法返回一个能够响应该消息的对象。如果备用接收者不存在或无法响应该消息，那么就会继续执行第三步。
+
+3. 完整转发：如果快速转发也失败了，Objective-C运行时会调用对象的-methodSignatureForSelector:方法，获取该消息的方法签名。然后，运行时会创建一个NSInvocation对象，将该消息的方法签名和参数传递给该对象，并调用对象的-forwardInvocation:方法。在-forwardInvocation:方法中，我们可以将该消息转发给另一个对象来处理，或者直接处理该消息。
+
+[消息转发代码demo演示](https://github.com/UCanSeeeeee/MessageForwarding)
+
+消息转发机制为我们提供了一种动态地处理未知消息的方式，使得我们可以在运行时动态地为对象添加方法实现，或者将消息转发给其他对象来处理。
+
+![](/books/ocmessage.jpg)
+
+---
 
 ---
 
