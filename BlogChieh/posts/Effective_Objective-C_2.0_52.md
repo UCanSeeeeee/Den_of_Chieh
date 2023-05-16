@@ -496,6 +496,7 @@ NSLog(@"%@",[[array superclass] debugDescription]);
      id value：关联的对象（如dog）
      objc_AssociationPolicy policy：内存管理的策略
     */
+
 // 1>将object和value关联在一起：
 void objc_setAssociatedObject(id object, const void *key, id value, objc_AssociationPolicy policy)
 
@@ -511,24 +512,22 @@ void objc_removeAssociatedObjects(id object);
 
 ```
 // .h
+
   // 1>声明一个button点击事件的回调block
 typedef void(^ButtonClickCallBack)(UIButton *button);
   // 2>为UIButton增加的回调方法
 - (void)handleClickCallBack:(ButtonClickCallBack)callBack;
 
 // .m
+
    // 实现回调方法
 - (void)handleClickCallBack:(ButtonClickCallBack)callBack {   
-
     objc_setAssociatedObject(self, &buttonClickKey, callBack, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
     [self addTarget:self action:@selector(buttonClicked) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)buttonClicked {
-
     ButtonClickCallBack callBack = objc_getAssociatedObject(self, &buttonClickKey);
-
     if (callBack) {
         callBack(self);
     }
@@ -583,13 +582,21 @@ objc_msgSendSuper：如果要给超类发消息，例如[super message:parameter
 
 iOS开发过程中我们经常会碰到这样的报错：`reason: '-[People doesNotExist]: unrecognized selector sent to instance 0x6000021e4640'`，原因是我们调用了一个不存在的方法。用OC消息机制来说就是：消息的接收者不过到对应的selector，这样就启动了消息转发机制，我们可以通过代码在消息转发的过程中告诉对象应该如何处理未知的消息。
 
-1. 方法解析：首先，Objective-C运行时会调用对象的+resolveInstanceMethod:或+resolveClassMethod:方法，尝试动态地为该消息添加一个方法实现。如果该方法实现被成功添加，那么消息就会被重新发送，这次能够被对象响应。
+#### 1.方法解析
 
-2. 快速转发：如果方法解析失败，Objective-C运行时会尝试将消息转发给一个备用接收者。备用接收者是一个实现了-forwardingTargetForSelector:方法的对象，该方法返回一个能够响应该消息的对象。如果备用接收者不存在或无法响应该消息，那么就会继续执行第三步。
+首先，Objective-C运行时会调用对象的`+resolveInstanceMethod:`或`+resolveClassMethod:`方法，尝试动态地为该消息添加一个方法实现。如果该方法实现被成功添加，那么消息就会被重新发送，这次能够被对象响应。
 
-3. 完整转发：如果快速转发也失败了，Objective-C运行时会调用对象的-methodSignatureForSelector:方法，获取该消息的方法签名。然后，运行时会创建一个NSInvocation对象，将该消息的方法签名和参数传递给该对象，并调用对象的-forwardInvocation:方法。在-forwardInvocation:方法中，我们可以将该消息转发给另一个对象来处理，或者直接处理该消息。
+#### 2.快速转发
 
-[消息转发代码demo演示](https://github.com/UCanSeeeeee/MessageForwarding)
+如果方法解析失败，Objective-C运行时会尝试将消息转发给一个备用接收者。备用接收者是一个实现了`-forwardingTargetForSelector:`方法的对象，该方法返回一个能够响应该消息的对象。如果备用接收者不存在或无法响应该消息，那么就会继续执行第三步。
+
+#### 3.完整转发
+
+如果快速转发也失败了，Objective-C运行时会调用对象的`-methodSignatureForSelector:`方法，获取该消息的方法签名。然后，运行时会创建一个NSInvocation对象，将该消息的方法签名和参数传递给该对象（那条尚未处理的消息有关的全部细节，包括“选择子”、“目标”和“参数”），并调用对象的`-forwardInvocation:`方法。在`-forwardInvocation`方法中，我们可以将该消息转发给另一个对象来处理，或者直接处理该消息。实现此方法时，若发现某调用操作不应由本类处理，则需调用超类的同名方法。这样的话，继承体系中的每个类都有机会处理此调用请求，直至NSObject。 如果最后调用了NSObject类的方法，那么该方法还会继而调用`doesNotRecognizeselector`以抛出;异常，此异常表明选择子最终末能得到处理。
+
+[消息转发代码demo演示](https://github.com/UCanSeeeeee/MessageForwarding/blob/main/MessageForwardingDemo/MessageForwardingDemo/ViewController.m)
+
+接收者在每一步中均有机会处理消息。步骤越往后，处理消息的代价就越大。最好能在第一步就处理完，这样的话，运行期系统就可以将此方法缓存起来了。如果这个类的实例稍后还收到同名选择子，那么根本无需启动消息转发流程。若想在第三步里把消息转给备援的接收者，那还不如把转发操作提前到第二步。因为第三步只是修改了调用目标，这项改动放在第二步执行会更为简单，不然的话，还得创建并处理完整的 NSInvocation。
 
 消息转发机制为我们提供了一种动态地处理未知消息的方式，使得我们可以在运行时动态地为对象添加方法实现，或者将消息转发给其他对象来处理。
 
@@ -597,8 +604,212 @@ iOS开发过程中我们经常会碰到这样的报错：`reason: '-[People does
 
 ---
 
----
+### 第13条：用“方法调配技术”调试“黑盒方法”
+
+这条讲的主要内容就是Method Swizzling（Objective-C Runtime 中的一项特性，它允许我们在运行时动态地交换两个方法的实现。通过使用 Method Swizzling，我们可以在不修改原始代码的情况下，对现有方法的行为进行定制化。），通过运行时的一些操作可以用另外一份实现来替换掉原有的方法实现，往往被应用在向原有实现中添加新功能，比如扩展UIViewController，在viewDidLoad里面增加打印信息等。
+
+此方案仅用于程序调试，不可滥用。
+
+[黑盒测试demo演示](https://github.com/UCanSeeeeee/MessageForwarding/blob/main/MessageForwardingDemo/MessageForwardingDemo/UIViewController%2BHook.m)
+
+方法调配技术也就是方法交换技术。 
+
+```
+//获取类的实例方法 返回一个Method对象
+class_getInstanceMethod(Class obj, SEL cmd)
+
+//获取类的类方法 返回一个Method对象
+class_getClassMethod(Class obj, SEL cmd)
+
+//替换方法的实现
+method_exchangeImplementations(method1, method2)
+
+/*  添加一个新的方法和该方法的具体实现
+    Class cls 你要添加新方法的那个类
+    SEL name 要添加的方法
+    IMP imp 指向实现方法的指针   就是要添加的方法的实现部分
+    const char *types 我们要添加的方法的返回值和参数  
+*/
+OBJC_EXPORT BOOL class_addMethod(Class cls, SEL name, IMP imp,  const char *types) OBJC_AVAILABLE(10.5, 2.0, 9.0, 1.0)；
+```
 
 ---
+
+### 第14条：理解“类对象”的用意
+
+[Objective-C类是由Class类型来表示的，它实际上是一个指向objc_class结构体的指针](https://chiehwang.top/iOS_NSObject)
+
+该objc_class结构体存放的是类的“元数据”（metadata）
+
+isa指针指向的是另外一个类叫做元类（metaClass）。那什么是元类呢？元类是类对象的类。也可以换一种容易理解的说法：
+
+```
+当你给对象发送消息时，runtime处理时是在这个对象的类的方法列表中寻找
+当你给类发消息时，runtime处理时是在这个类的元类的方法列表中寻找
+```
+
+![](/books/isaClass.png)
+
+```
+上图可以总结为下：
+1.每一个Class都有一个isa指针指向一个唯一的Meta Class
+2.每一个Meta Class的isa指针都指向最上层的Meta Class，这个Meta Class是NSObject的Meta Class。(包括NSObject的Meta Class的3.isa指针也是指向的NSObject的Meta Class，也就是自己，这里形成了个闭环)
+4.每一个Meta Class的super class指针指向它原本Class的 Super Class的Meta Class (这里最上层的NSObject的Meta Class的super class指针还是指向自己)
+5.最上层的NSObject Class的super class指向 nil
+```
+
+---
+
+# 第3章 接口与API设计
+
+### 第15条：用前缀避免命名空间冲突
+
+为了避免程序的链接过程中出现`duplicate symbol xxx in:`错误，要尽量在类名，以及分类和分类方法上增加前缀，还有一些宏定义等等根据自己项目来定吧。
+
+---
+
+### 第16条：提供“全能初始化方法”
+
+#### 一、什么是全能初始化方法
+
+在NSDate类中，初始化方法有下面这几种：
+
+```
+- (instancetype)init;
+- (instancetype)initWithTimeIntervalSinceReferenceDate:(NSTimeInterval)ti;
+- (instancetype)initWithTimeIntervalSinceNow:(NSTimeInterval)secs;
+- (instancetype)initWithTimeIntervalSince1970:(NSTimeInterval)secs;
+- (instancetype)initWithTimeInterval:(NSTimeInterval)secsToBeAdded sinceDate:(NSDate *)date;
+```
+
+在上面的几个初始化方法中，`-(instancetype)initWithTimeIntervalSinceReferenceDate:`是全能初始化方法,其他的初始化方法最终都是调用它，生成了NSDate类。
+
+为什么要引入全能初始化方法这个概念呢？省事。
+
+#### 二、实例
+
+比如我们要编写一个表示矩形的类：
+
+```
+@interface EOCRectangle : NSObject
+
+@property (nonatomic, assign, readonly) float width;
+@property (nonatomic, assign, readonly) float height;
+- (instancetype)initWithWidth:(float)width
+                    andHeight:(float)height;
+
+@end
+
+@implementation EOCRectangle
+
+-(instancetype)initWithWidth:(float)width andHeight:(float)height{
+    if (self = [super init]) {
+        _width = width;
+        _height = height;
+    }
+    return self;
+}
+
+@end
+```
+
+这里我们会碰到一个问题，如果有人直接用`[[EOCRectangle alloc] init];`来初始化，长宽就无法设置，这个类就无法工作。所以我们通常有两种处理方式：
+
+```
+// 1.在init方法中，传入默认的值，就是讲类必须的参数的默认值传入，形成一个类
+-(instancetype)init{
+    return [self initWithWidth:5.0f andHeight:10.0f];
+}
+
+// 2.是我们不希望开发者调用init方法，这样类就不能正常工作，我们可以在init方法中，抛出异常，但是一般我们不这样处理，在OC中，只有发生严重错误时，我们才抛出异常。
+-(instancetype)init{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"不允许调用这个初始化方法，请调用initWithWidth:andHeight:方法" userInfo:nil];
+}
+```
+
+#### 三、在继承中处理全能初始化方法
+
+创建一个正方形类EOCSquare类，让他继承自EOCRectangle类，正方形的长宽必须相等。那么我们需要提供一个传入边长的初始化方法。`- (instancetype)initWithDimension:(float)dimension;`在实现中：调用父类的方法，传入相同的长宽，即是一个正方形。
+
+```
+- (instancetype)initWithDimension:(float)dimension{
+    return [super initWithWidth:dimension andHeight:dimension];
+}
+```
+
+然而，即使我们提供了传入边长的初始化方法，调用者还是可能会调用`initWithWidth:andHeight:`或者`init`方法来初始化，这是我们不愿意看到的，于是就有一个重要的结论：**如果子类的全能初始化方法和父类的全能初始化方法不同，那么总是应该覆写父类的全能初始化方法**
+
+```
+-(instancetype)initWithWidth:(float)width andHeight:(float)height{
+    float dimension = MAX(width, height);
+    return [self initWithDimension:dimension];
+}
+```
+
+**如果超类的全能初始化方法不适用于子类，我们一般不覆写并使用父类的全能初始化方法，这样显得毫不合理，而是应该在其中抛出异常。**我们还需要覆写init方法。这样，我们就认为，开发者在初始化正方形时，只能传入相应的边长，如果传入长宽，那么认为是调用者自己犯了错误。
+
+```
+-(instancetype)initWithWidth:(float)width andHeight:(float)height{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"不允许调用这个初始化方法，请调用initWithDimension:方法" userInfo:nil];
+}
+
+-(instancetype)init{
+    return [self initWithDimension:5.0f];
+}
+```
+
+---
+
+### 第16条：实现description
+
+这条讲的是可以通过覆写description方法或者debugDescription方法来在NSLog打印时或者LLDB打印时输出更多的自定义信息。
+
+在打印数组或者字典上，这样是很好用的：
+
+```
+NSArray *arr = @[@"111",@"222"];
+NSLog(@"arr = %@",arr);
+//打印出 arr = (111,222)
+```
+
+但是如我们在自定义的类中，就不会像刚才那样输出了，输出的往往是一堆内存地址，这样一点也不好调试：
+
+```
+EOCRectangle *rectangle = [[EOCRectangle alloc] initWithWidth:10 andHeight:5];
+NSLog(@"rectangle = %@", rectangle);
+// rectangle = <EOCRectangle: 0x600000618830>
+```
+
+要想输出对象的信息，我们需要在类中，重写description方法，例如：
+
+```
+-(NSString *)description{
+    return [NSString stringWithFormat:@"%@:%p,%@",
+            [self class],
+            self,
+          @{
+            @"width":@(_width),
+            @"height":@(_height),
+            }];
+}
+/* 输出：
+rectangle = EOCRectangle:0x600002e1c350,{
+    height = 5;
+    width = 10;
+}
+*/
+```
+
+在调试打断点的时候一般重写debugDescription来打印些信息：
+
+```
+-(NSString *)debugDescription{
+    return [NSString stringWithFormat:@"po 的时候打印我 %@:%p,%@,%@",
+            [self class],
+            self,
+            _width,
+            _height];
+}
+```
 
 ---

@@ -50,17 +50,17 @@ typedef struct objc_class *Class; //即实际占用了一个指针大小，为8�
 
 ```
 struct objc_class : objc_object {
-    Class superclass; // 父类
-    const char *name; // 类名
-    uint32_t version; // 类的版本信息，默认为0
-    uint32_t info; // 类信息，供运行期使用的一些位标识
-    uint32_t instance_size; // 该类的实例变量大小
-    struct old_ivar_list *ivars; // 该类的成员变量链表
-    struct old_method_list **methodLists;  // 方法定义的链表
-    Cache cache; // 方法缓存
-    struct old_protocol_list *protocols; // 协议链表
+    Class superclass;                       // 父类
+    const char *name;                       // 类名
+    uint32_t version;                       // 类的版本信息，默认为0
+    uint32_t info;                          // 类信息，供运行期使用的一些位标识
+    uint32_t instance_size;                 // 该类的实例变量大小
+    struct old_ivar_list *ivars;            // 该类的成员变量链表
+    struct old_method_list **methodLists;   // 方法定义的链表
+    Cache cache;                            // 方法缓存
+    struct old_protocol_list *protocols;    // 协议链表
     // CLS_EXT only 
-    const uint8_t *ivar_layout; //记录了哪些是 strong 的 ivar
+    const uint8_t *ivar_layout;             //记录了哪些是 strong 的 ivar
     struct old_class_ext *ext;
     ......
 }
