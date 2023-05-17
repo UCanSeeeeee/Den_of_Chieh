@@ -760,7 +760,7 @@ isa指针指向的是另外一个类叫做元类（metaClass）。那什么是�
 
 ---
 
-### 第16条：实现description
+### 第17条：实现description
 
 这条讲的是可以通过覆写description方法或者debugDescription方法来在NSLog打印时或者LLDB打印时输出更多的自定义信息。
 
@@ -813,3 +813,58 @@ rectangle = EOCRectangle:0x600002e1c350,{
 ```
 
 ---
+
+### 第18条：尽量使用不可变对象
+
+这条主要讲尽量使用不可变的对象，也就是在对外属性声明的时候要尽量加上readonly修饰，这样一来，在外部就只能读取该数据，而不能修改它，使得这个类的实例所持有的数据更加安全。如果外部想要修改，可以**提供方法**来进行修改。
+
+[具体示例代码](https://github.com/UCanSeeeeee/MessageForwarding/blob/main/MessageForwardingDemo/MessageForwardingDemo/CWZoo.m)。
+
+```
+❌ 不推荐写法：
+@property (nonatomic,readonly) NSSet *animals;
+```
+```
+✅ 应改为：
+// .h
+@property (nonatomic,readonly) NSSet *animals;
+- (void)addAnimals:(NSString *)animal;
+- (void)removeAnimals:(NSString *)animal;
+- (void)showAnimals;
+
+// .m
+- (NSSet *)animals {
+    return [_mutableAnimals copy];
+}
+
+- (void)addAnimals:(NSString *)animal {
+    [_mutableAnimals addObject:animal];
+}
+
+- (void)removeAnimals:(NSString *)animal {
+    [_mutableAnimals removeObject:animal];
+}
+```
+
+这样写固然有好，保证了数据的安全性，但代码量也会提升不少。
+
+另外，如果某属性仅可以在对象内部修改，则可以在.h文件中声明为readonly。然后 在.m的类扩展中将属性扩展为readwrite属性。
+
+---
+
+### 第19条：使用清晰而协调的命名方式
+
+写OC代码像是在讲故事，而读OC代码更像是在听故事。
+
+[Objective-C编程规范以及建议](https://chiehwang.top/programming_specification)
+
+---
+### 第20条：为私有方法名加前缀
+
+---
+
+### 第17条：实现description
+### 第17条：实现description
+### 第17条：实现description
+### 第17条：实现description
+### 第17条：实现description

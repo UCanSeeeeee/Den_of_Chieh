@@ -1,6 +1,6 @@
 ---
 title: 新Mac开发环境配置
-publish_date: 2023-04-05
+publish_date: 2022-12-05
 ---
 
 为未来做准备
@@ -20,7 +20,7 @@ publish_date: 2023-04-05
 
 # 开发
 ```
-- Xcode + SF符号 + Cursor + VSCode + ClashX Pro / Shadowsocks
+- Xcode + SF符号 + Cursor + VSCode + ClashX Pro / Shadowsocks + code snippet(https://juejin.cn/post/7017979211679793188)
 - Lookin 
 - Sourcetree
 - iTerm terminal
@@ -35,7 +35,7 @@ publish_date: 2023-04-05
 - MonitorControl 外接显示器辅助
 - Xmind + WPS 文档画图
 - Imgur 图片转url
-- Motrix / Downie / NeatdownloadManager 视频下载
+- Motrix / Downie / NeatdownloadManager 视频下载 + 插件HD2A(http://121.5.226.51/tampermonkey/hd2a.user.js)
 - The Unarchiver 解压缩
 - IINA 视频播放器
 - CleanMyMac X 磁盘清理
