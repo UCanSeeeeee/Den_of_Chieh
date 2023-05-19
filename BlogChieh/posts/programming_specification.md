@@ -74,6 +74,8 @@ publish_date: 2022-12-26
 2.`#pragma mark` 把代码进行分类、`#pragma mark -` 有下划线分割。
 ```
 
+---
+
 ### 建议
 
 [这些建议在另一篇博客第四条有描述](https://chiehwang.top/Effective_Objective-C_2.0_52)

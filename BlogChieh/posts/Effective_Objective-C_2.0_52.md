@@ -859,7 +859,10 @@ rectangle = EOCRectangle:0x600002e1c350,{
 [Objective-C编程规范以及建议](https://chiehwang.top/programming_specification)
 
 ---
+
 ### 第20条：为私有方法名加前缀
+
+这条主要目的是来区分**公私有方法**，本书提供的技术方案是**在私有方法名前加前缀p_**，其实还可以通过`#pragma mark -`来实现，具体用哪种全凭开发者的习惯。
 
 ---
 
