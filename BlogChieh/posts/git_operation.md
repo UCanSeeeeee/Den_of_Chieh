@@ -5,8 +5,6 @@ publish_date: 2022-12-25
 
 Git!
 
-![](/i/gitfoundation.png)
-
 ### 更新系统git报错:
 xcode-select --install
 
@@ -17,6 +15,15 @@ xcode-select --install
 ```
 sudo arch -x86_64 gem install ffi
 arch -x86_64 pod install
+```
+
+---
+
+### Clash：
+```
+mixed-port: 7890       （混合代理端口）
+socks-port: 7891       （Socks5 代理端口）
+port: 7892             （HTTP 代理端口）
 ```
 
 ---
@@ -41,6 +48,20 @@ curl ipinfo.io
 
 ---
 
+### ClashX设置修改代理端口:
+
+```
+mixed-port: 7890             （混合代理端口）
+socks-port: 7891              （Socks5 代理端口）
+port: 7892                         （HTTP 代理端口）
+external-controller: 127.0.0.1:xxxx   （外部控制设置）
+allow-lan: false
+mode: rule
+log-level: warning
+```
+
+---
+
 ### pod init 模版:
 
 ```
@@ -54,8 +75,9 @@ target 'XXProject' do
   # Pods for BNMemoryCurveProject
 end
 ```
+cd 工程目录
 
-cd workspace -> pod install
+pod install
 
 ---
 
@@ -64,6 +86,10 @@ cd workspace -> pod install
 参考资料：
 
 [清华硕士谭新宇](https://github.com/OneSizeFitsQuorum/git-tips)
+
+[正确的github工作流](https://www.bilibili.com/video/BV19e4y1q7JJ/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=64a015eda4e3444c64508773171accf2)
+
+[BBCo](https://www.bilibili.com/video/BV1cS4y1U7uL/?spm_id_from=333.999.0.0&vd_source=64a015eda4e3444c64508773171accf2)
 
 [Git使用心得](https://segmentfault.com/a/1190000023734704)
 
@@ -92,7 +118,7 @@ cd 根目录
 git init  //建立仓库  
 git add . //这个命令会把当前路径下的所有文件添加到待上传的文件列表中。如果想添加某个特定的文件，只需把 . 换成特定的文件名即可  
 git commit -m "这里写上提交的注释"  
-git remote add <name> <url>
+git remote add origin+你的库链接  
 git push -u origin master  
 ```
 
@@ -275,7 +301,3 @@ git merge（merge会形成一个四边形，产生一个新的commit，就是一
 git rebase（rebase抛开commit的变化，就相当于develop从没出现过一样，按顺序在master新提交一遍）
 
 ![](/i/efabca73-de84-489b-aacb-9c3aa4a7ea5d.jpg)
-
-### Git命令大全
-
-![](/i/git速查表.jpg)
