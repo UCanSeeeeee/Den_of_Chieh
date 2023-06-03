@@ -93,7 +93,7 @@ git init  //建立仓库
 git add . //这个命令会把当前路径下的所有文件添加到待上传的文件列表中。如果想添加某个特定的文件，只需把 . 换成特定的文件名即可  
 git commit -m "这里写上提交的注释"  
 git remote add <name> <url>
-git push -u origin master  
+git push -u <name> <branch>  
 ```
 
 ---
