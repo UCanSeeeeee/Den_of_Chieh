@@ -5,6 +5,21 @@ publish_date: 2022-12-26
 
 后续会有些修改和补充
 
+### 命名
+
+There are only two hard things in computer science: cache invalidation and naming things
+
+```
+1.避免用单个字母命名
+2.绝对不要缩写
+3.不要在名称中携带类型信息 // 个人不认同
+4.类名不使用Base字段，即使是基类 // PoliceCar: Car 而不是 PoliceCar: BaseCar
+```
+
+```
+1.在变量名中带上单位 // delaySeconds
+```
+
 ### 方法声明和定义
 
 -或者+和返回类型之间须使用一个空格，括号要同行并有一个空格。
