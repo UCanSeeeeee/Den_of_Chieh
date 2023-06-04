@@ -113,26 +113,68 @@ git log --graph 点线图
 
 ### 常用命令:
 ```
-- git status // 查看状态
-- git add . // 将工作区的文件提交到暂存区
+- git status                   // 查看状态
+- git add .                    // 将工作区的文件提交到暂存区
 - git commit -m "本次提交说明"   // 将暂存区内容添加到local区的当前分支中
 - git commit -am "本次提交说明"  // add和commit的合并，便捷写法（未追踪的文件无法直接提交到暂存区/本地仓库）
 - git push -u <RemoteHostName> <LocalBranchName> // 将本地分支和远程分支进行关联
-- git push // 将本地仓库的文件推送到远程分支
-- git pull <RemoteHostName> <RemoteBranchName> // 拉取远程分支的代码
-- git diff // 查看暂存区与disk区文件的差异。
-- git branch // 查看本地拥有哪些分支
-- git branch -a // 查看所有分支（包括远程分支和本地分支）
-- git branch -D xxx // 不加-D表示创建新local分支xxx，加-D表示强制删除local分支xxx。
-- git checkout branchName  // 切换分支
-- git checkout -b xxx // git checkout xxx是指切换到xxx（用local区的xxx替换disk区文件），-b意味着branch，即创建新分支，这条指令合起来意思是创建并切换到xxx。
-- git stash // 临时将工作区文件的修改保存至堆栈中
-- git stash pop // 将之前保存至堆栈中的文件取出来
-- git reset xxx // changes -> untracked files
-- git log // 查看历史日志 - ‘利用好commit’
-- git merge branchName // 合并分支
-- git rebase xxx // 假设当前分支与xxx分支存在共同部分common，该指令用xxx分支包括common在内的整体替换当前分支的common部分（原先xxx分支内容为common->diversityA，当前分支内容为common->diversityB，执行完该指令后当前分支内容为common->diversityA->diversityB）。
+- git push                     // 将本地仓库的文件推送到远程分支
+- git pull <RemoteHostName> <RemoteBranchName>   // 拉取远程分支的代码
+- git diff                     // 查看暂存区与disk区文件的差异。
+- git branch                   // 查看本地拥有哪些分支
+- git branch -a                // 查看所有分支（包括远程分支和本地分支）
+- git branch -D xxx            // 不加-D表示创建新local分支xxx，加-D表示强制删除local分支xxx。
+- git checkout branchName      // 切换分支
+- git checkout -b xxx          // git checkout xxx是指切换到xxx（用local区的xxx替换disk区文件），-b意味着branch，即创建新分支，这条指令合起来意思是创建并切换到xxx。
+- git stash                    // 临时将工作区文件的修改保存至堆栈中
+- git stash pop                // 将之前保存至堆栈中的文件取出来
+- git reset xxx                // changes -> untracked files
+- git log                      // 查看历史日志 - ‘利用好commit’
+- git merge branchName         // 合并分支
+- git rebase xxx               // 假设当前分支与xxx分支存在共同部分common，该指令用xxx分支包括common在内的整体替换当前分支的common部分（原先xxx分支内容为common->diversityA，当前分支内容为common->diversityB，执行完该指令后当前分支内容为common->diversityA->diversityB）。
 ```
+
+---
+
+### add
+
+将工作区的文件添加到暂存区
+```
+git add [file1] [file2] ...           // 添加指定文件到暂存区（追踪新增的指定文件）
+git add [dir]                         // 添加指定目录到暂存区，包括子目录
+git rm [file1] [file2] ...            // 删除工作区/暂存区的文件
+git rm --cached [file]                // 停止追踪指定文件，但该文件会保留在工作区
+git mv [file-original] [file-renamed] // 改名工作区/暂存区的文件
+git add . == git add -A               // 作用于文件的增删改
+gti add -u                            // 只作用于文件的修改和删除
+```
+---
+
+### status
+
+```
+git status      // 查看工作区和暂存区的状态
+```
+---
+
+### commit
+
+将暂存区的文件提交到本地仓库
+```
+git commit -m "本次提交的说明"    // 将暂存区的文件提交到本地仓库并添加提交说明
+git commit -am "本次提交的说明"   // add 和 commit 的合并，便捷写法，和 git add -u 命令一样，未跟踪的文件是无法提交上去的
+
+# 跳过验证继续提交
+$ git commit --no-verify
+$ git commit -n
+
+# 编辑器会弹出上一次提交的信息，可以在这里修改提交信息
+$ git commit --amend
+# 修复提交，同时修改提交信息
+$ git commit --amend -m "本次提交的说明"
+```
+---
+
 
 ### 创建仓库 && 第一次提交:
 
