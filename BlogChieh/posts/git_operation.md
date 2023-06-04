@@ -117,9 +117,9 @@ git log --graph 点线图
 - git add .                    // 将工作区的文件提交到暂存区
 - git commit -m "本次提交说明"   // 将暂存区内容添加到local区的当前分支中
 - git commit -am "本次提交说明"  // add和commit的合并，便捷写法（未追踪的文件无法直接提交到暂存区/本地仓库）
-- git push -u <RemoteHostName> <LocalBranchName> // 将本地分支和远程分支进行关联
+- git push -u <远程仓库名> <本地分支名> // 将本地分支和远程分支进行关联
 - git push                     // 将本地仓库的文件推送到远程分支
-- git pull <RemoteHostName> <RemoteBranchName>   // 拉取远程分支的代码
+- git pull <远程仓库名> <远程分支名>    // 拉取远程分支的代码
 - git diff                     // 查看暂存区与disk区文件的差异。
 - git branch                   // 查看本地拥有哪些分支
 - git branch -a                // 查看所有分支（包括远程分支和本地分支）
@@ -163,18 +163,40 @@ git status      // 查看工作区和暂存区的状态
 ```
 git commit -m "本次提交的说明"    // 将暂存区的文件提交到本地仓库并添加提交说明
 git commit -am "本次提交的说明"   // add 和 commit 的合并，便捷写法，和 git add -u 命令一样，未跟踪的文件是无法提交上去的
-
-# 跳过验证继续提交
-$ git commit --no-verify
-$ git commit -n
-
-# 编辑器会弹出上一次提交的信息，可以在这里修改提交信息
-$ git commit --amend
-# 修复提交，同时修改提交信息
-$ git commit --amend -m "本次提交的说明"
+git commit --amend              // 编辑器会弹出上一次提交的信息，可以在这里修改提交信息
+git commit --amend -m "本次提交的说明"  // 修改提交，同时修改提交信息
 ```
 ---
 
+### push&pull
+
+将本地分支的提交推送到远程仓库
+```
+git push -u <远程仓库名> <本地分支名> // 建立当前分支和远程分支的追踪关系
+git push                          // 如果当前分支与远程分支之间存在追踪关系，则可以省略分支和 -u 
+git push --all <远程仓库名>         // 不管是否存在对应的远程分支，将本地的所有分支都推送到远程主机
+git push <远程主机名> <本地分支名>:<远程分支名> // 将本地仓库的文件推送到远程分支，如果远程仓库没有这个分支，会新建一个同名的远程分支，如果省略远程分支名，则表示两者同名。
+git push <远程仓库名> :<远程分支名>           // 如果省略本地分支名，则表示删除指定的远程分支，因为这等同于推送一个空的本地分支到远程分支。等同于 git push origin --delete master。
+```
+
+从远程仓库拉取文件到本地
+```
+git pull                        // 从远程仓库获取最新的提交并合并到本地当前分支
+git pull <远程仓库名> <远程分支名> // 拉取远程分支的代码
+git fetch <远程仓库名> <远程分支名> && git merge <远程仓库名>/<远程分支名> // 等同于 fetch + merge
+```
+---
+
+### remote
+
+通常用来管理上游仓库，可以通过git remote -v来查看相关信息，其相关命令如下：
+```
+git remote add <远程主机名> <url>                // 添加远程仓库关联
+git remote remove <远程主机名>                   // 删除远程仓库关联
+git remote rename <old远程主机名> <new远程主机名>  // 更名远程仓库关联
+git remote show <远程主机名>                     // 显示某个远程仓库的信息
+git remote set-url <远程主机名> <new_url>        // 更新远程仓库 url
+```
 
 ### 创建仓库 && 第一次提交:
 
