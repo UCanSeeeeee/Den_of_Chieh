@@ -7,17 +7,15 @@ Git!
 
 ![](/i/gitfoundation.png)
 
+```
+Workspace：工作区
+Index / Stage：暂存区
+Repository：仓库区（或本地仓库）
+Remote：远程仓库
+```
+
 ### 更新系统git报错:
 xcode-select --install
-
----
-
-### M1 bug Git操作:
-
-```
-sudo arch -x86_64 gem install ffi
-arch -x86_64 pod install
-```
 
 ---
 
@@ -41,47 +39,99 @@ curl ipinfo.io
 
 ---
 
-### pod init 模版:
-
+### 配置git
 ```
-platform :ios, '9.0'
-target 'XXProject' do
-  # Comment the next line if you don't want to use dynamic frameworks
-  use_frameworks!
-    pod 'SDWebImage'
-    pod 'SVGKit', :git => 'https://github.com/SVGKit/SVGKit.git', :branch => '3.x'
-    pod 'zhPopupController', '~> 2.0'
-  # Pods for BNMemoryCurveProject
-end
+# 配置全局用户
+git config --global user.name "用户名" 
+git config --global user.email "git账号"
+# 这里只是美化 log 的输出，实际使用时可以在 git lg 后面加命令参数，如： git lg -10 显示最近10条提交
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 ```
-
-cd workspace -> pod install
 
 ---
 
+### 查看git信息
+```
+# 查看用户配置
+cat ~/.gitconfig  // 'cat'命令用于连接文件并将其打印到终端，'~'表示当前用户的主目录。
+# 查看本地 git 命令历史
+git reflog // 不会永远保持，Git 会定期清理那些 “用不到的” 对象，不要指望几个月前的提交还一直在那里。
+# 查看所有 git 命令
+git --help -a
+# 列出当前git存储库中已跟踪的文件
+git ls-files
+# 查看提交历史
+$ git log --oneline  
+          --grep="关键字"
+          --graph 
+          --all      
+          --author "username"     
+          --reverse 
+          -num
+          -p
+          --before=  1  day/1  week/1  "2019-06-06" 
+          --after= "2019-06-06"
+          --stat 
+          --abbrev-commit 
+          --pretty=format:"xxx"
+          
+# oneline -> 将日志记录一行一行的显示
+# grep="关键字" -> 查找日志记录中(commit提交时的注释)与关键字有关的记录
+# graph -> 记录图形化显示 ！！！    
+# all -> 将所有记录都详细的显示出来
+# author "username" -> 查找这个作者提交的记录
+# reverse -> commit 提交记录顺序翻转      
+# before -> 查找规定的时间(如:1天/1周)之前的记录   
+# num -> git log -10 显示最近10次提交 ！！！    
+# stat -> 显示每次更新的文件修改统计信息，会列出具体文件列表 ！！！
+# abbrev-commit -> 仅显示 SHA-1 的前几个字符，而非所有的 40 个字符 ！！！
+# pretty=format:"xxx" ->  可以定制要显示的记录格式 ！！！
+# p -> 显示每次提交所引入的差异（按 补丁 的格式输出）！！！
+```
+
+---
+
+### 符号解释
+```
+git log --graph 点线图
+*	表示一个 commit
+|	表示分支前进
+/	表示分叉
+\	表示合入
+|/	表示新分支
+```
+---
 # Git手册
 
 参考资料：
 
 [清华硕士谭新宇](https://github.com/OneSizeFitsQuorum/git-tips)
 
-[Git使用心得](https://segmentfault.com/a/1190000023734704)
+[Git使用心得](https://juejin.cn/post/6844904191203213326)
 
 [廖雪峰：Python、区块链、Git学习](https://www.liaoxuefeng.com/wiki/896043488029600)
 
 ### 常用命令:
 ```
-- git checkout -b xxx：git checkout xxx是指切换到xxx（用local区的xxx替换disk区文件），-b意味着branch，即创建新分支，这条指令合起来意思是创建并切换到xxx。
-- git diff：查看暂存区与disk区文件的差异。
-- git add xxx：将xxx文件添加到暂存区。
-- git commit：将暂存区内容添加到local区的当前分支中。
-- git push <RemoteHostName> <LocalBranchName>：将local区的LocalBranchName分支推送到RemoteHostName主机的同名分支。（若加-f表示无视本地与远程分支的差异强行push）
-- git pull <RemoteHostName> <RemoteBranchName>：同上，不过改成从远程主机下载远程分支并与本地同名分支合并。
-- git rebase xxx：假设当前分支与xxx分支存在共同部分common，该指令用xxx分支包括common在内的整体替换当前分支的common部分（原先xxx分支内容为common->diversityA，当前分支内容为common->diversityB，执行完该指令后当前分支内容为common->diversityA->diversityB）。
-- git branch -D xxx：不加-D表示创建新local分支xxx，加-D表示强制删除local分支xxx。
-- git reset xxx // changes -> untracked files  
-- git status // 查看状态  
-- git log // 查看历史日志 - ‘利用好commit’  
+- git status // 查看状态
+- git add . // 将工作区的文件提交到暂存区
+- git commit -m "本次提交说明"   // 将暂存区内容添加到local区的当前分支中
+- git commit -am "本次提交说明"  // add和commit的合并，便捷写法（未追踪的文件无法直接提交到暂存区/本地仓库）
+- git push -u <RemoteHostName> <LocalBranchName> // 将本地分支和远程分支进行关联
+- git push // 将本地仓库的文件推送到远程分支
+- git pull <RemoteHostName> <RemoteBranchName> // 拉取远程分支的代码
+- git diff // 查看暂存区与disk区文件的差异。
+- git branch // 查看本地拥有哪些分支
+- git branch -a // 查看所有分支（包括远程分支和本地分支）
+- git branch -D xxx // 不加-D表示创建新local分支xxx，加-D表示强制删除local分支xxx。
+- git checkout branchName  // 切换分支
+- git checkout -b xxx // git checkout xxx是指切换到xxx（用local区的xxx替换disk区文件），-b意味着branch，即创建新分支，这条指令合起来意思是创建并切换到xxx。
+- git stash // 临时将工作区文件的修改保存至堆栈中
+- git stash pop // 将之前保存至堆栈中的文件取出来
+- git reset xxx // changes -> untracked files
+- git log // 查看历史日志 - ‘利用好commit’
+- git merge branchName // 合并分支
+- git rebase xxx // 假设当前分支与xxx分支存在共同部分common，该指令用xxx分支包括common在内的整体替换当前分支的common部分（原先xxx分支内容为common->diversityA，当前分支内容为common->diversityB，执行完该指令后当前分支内容为common->diversityA->diversityB）。
 ```
 
 ### 创建仓库 && 第一次提交:

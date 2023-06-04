@@ -129,6 +129,24 @@ arch -x86_64 pod install
 ```
 
 ---
+
+### pod init 模版:
+
+```
+platform :ios, '9.0'
+target 'XXProject' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+    pod 'SDWebImage'
+    pod 'SVGKit', :git => 'https://github.com/SVGKit/SVGKit.git', :branch => '3.x'
+    pod 'zhPopupController', '~> 2.0'
+  # Pods for BNMemoryCurveProject
+end
+```
+
+cd workspace -> pod init -> pod install
+
+---
 # 工具网站
 
 [在线网站清单](https://github.com/qianguyihao/website-list)
