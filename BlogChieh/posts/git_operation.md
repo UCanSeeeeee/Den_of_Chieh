@@ -48,6 +48,17 @@ git config --global user.email "git账号"
 git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 ```
 
+```
+Git 自带一个 git config 的工具来帮助设置控制 Git 外观和行为的配置变量。这些变量存储在三个不同的位置：
+
+/etc/gitconfig 文件: 包含系统上每一个用户及他们仓库的通用配置。如果使用带有 --system 选项的 git config 时，它会从此文件读写配置变量。
+
+~/.gitconfig 文件：只针对当前用户。可以传递 --global 选项让 Git 读写此文件。
+
+当前使用仓库的 Git 目录中的 config 文件（就是 .git/config）：针对该仓库。
+
+每一个级别覆盖上一级别的配置，所以 .git/config 的配置变量会覆盖 /etc/gitconfig 中的配置变量。
+```
 ---
 
 ### 查看git信息
@@ -166,7 +177,7 @@ git commit --amend -m "本次提交的说明"  // 修改提交，同时修改提
 ```
 ---
 
-### push&pull
+### push & pull
 
 将本地分支的提交推送到远程仓库
 ```
