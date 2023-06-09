@@ -15,7 +15,9 @@ publish_date: 2023-04-17
 
 [第五章：内存管理](#5)
 
-[第六章：块 与大中枢派发](#6)
+[第六章：块与大中枢派发](#6)
+
+[第七章：系统框架](#7)
 
 ---
 
@@ -1483,66 +1485,422 @@ performSelector系列方法的缺点有两个：
 
 ### 第43条：掌握 GCD 及操作队列的使用时机
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+// 该条笔者从未实用或了解过，mark一下。
+
+实现多线程编程除 GCD 以外还有一个很方便的技术便是 NSOperationQueue , GCD 是底层C语言的API, NSOperationQueue 是 Objective-C 的对象，是对于 GCD 的封装，在很多场景使用 NSOperationQueue 会使代码易读性更高。使用NSOperationQueue的一些优势：
+
+1.轻易取消某个操作，不过已经启动的操作无法取消。将操作添加到 GCD 是无法取消的。
+
+2.指定操作间的依赖关系。
+
+```
+NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+NSBlockOperation *downloadOperation = [NSBlockOperation blockOperationWithBlock:^{
+    sleep(3);
+    NSLog(@"下载某资源文件 %@",[NSThread currentThread]);
+}];
+NSBlockOperation *showInUIOperation = [NSBlockOperation blockOperationWithBlock:^{
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        NSLog(@"在 UI 进行展示 %@",[NSThread currentThread]);
+    }];
+}];
+
+// 将 showInUIOperation 添加为 downloadOperation 的依赖。这意味着 showInUIOperation 会在 downloadOperation 执行完毕之后才能执行。
+[showInUIOperation addDependency:downloadOperation]; 
+
+[queue addOperation:downloadOperation];
+[queue addOperation:showInUIOperation];
+
+// [queue setSuspended:NO]; 
+// 如果在创建队列时没有显式地设置 suspended 属性为 YES，则默认情况下队列是活动的，操作会立即开始执行。在这段代码中，创建队列后立即将操作添加到队列中，队列会开始执行操作。
+```
+
+3.通过 KVO 监听 NSOperation 对象的属性。例如：**isCancelled**,**isFinished**
+
+4.指定操作的优先级，**queuePriority**
+
+5.重用 NSOperation 对象。系统为我们提供了两种 NSOperation 对象的子类，NSBlockOperation 和 NSInvocationOperation, 针对不同业务也可以自己进行重用。
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.在解决多线程与任务管理问题时，派发队列并非唯一方案
+2.操作队列提供了一套高层的 Objective-C API , 能实现纯 GCD 所具备的绝大部分功能，而且还能完成一些更为复杂的操作，那些操作若改用 GCD 来实现，则需另外编写代码
 ```
 ---
 
-### 第35条：用“僵尸对象”调试内存管理问题
+### 第44条：通过 Dispatch Group 机制，根据系统资源状况来执行任务
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+一系列任务可归入一个dispatch group之中。开发者可以在这组任务执行完毕时获得通知。
+```
+// 任务 A 和任务 B 都有一定的耗时操作，当任务 A 执行 sleep 时，系统会将线程切换到执行任务 B，然后在任务 B 的 sleep 过程中切换回任务 A，以此类推。
+
+- (void)testGCDGroup {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_queue_t queue = dispatch_queue_create("com.qiuxuewei.q", DISPATCH_QUEUE_CONCURRENT);//并行
+    dispatch_group_async(group, queue, ^{
+        for (NSUInteger i = 0; i < 10; i++) {
+            sleep(0.5);
+            NSLog(@"线程: %@ +++  i:%zd",[NSThread currentThread], i);
+        }
+    });
+    dispatch_group_async(group, queue, ^{
+        for (NSUInteger j = 10; j < 20; j++) {
+            sleep(0.5);
+            NSLog(@"线程: %@ +++  j:%zd",[NSThread currentThread], j);
+        }
+    });
+    dispatch_group_notify(group, queue, ^{
+        NSLog(@"线程: %@ +++  dispatch_group_notify",[NSThread currentThread]);
+    });
+}
+```
+
+补充：使用**dispatch_apply**实现快速遍历，如果你直接调用 dispatch_apply 而不使用 dispatch_async 将任务提交到后台队列，它将会在当前线程（通常是主线程）中同步执行。这会导致当前线程被阻塞，直到所有任务执行完毕。
+
+```
+    dispatch_queue_t queue = dispatch_queue_create("com.example.myqueue", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_async(queue, ^{
+        dispatch_apply(10000, queue, ^(size_t index) {
+            NSLog(@"Thread: %@   ----  %zu", [NSThread currentThread], index);
+        });
+    });
+```
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.一系列任务可归入一个 dispatch group 之中，开发者可以在这组任务执行完毕时获得通知
+2.通过 dispatch group，可以在并发式派发队列里同时执行多项任务，此时 GCD 会根据系统资源状况来调度这些并发执行的任务。开发者开发者若自己来实现此功能，则需要编写大量代码。
 ```
 ---
 
-### 第35条：用“僵尸对象”调试内存管理问题
+### 第45条：使用 dispatch_once 来执行只需运行一次的线程安全代码
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+常用于写单例：
+```
+/*
+dispatch_once_t是一个静态变量，它用来标识代码块是否已经执行过。dispatch_once函数则用来确保代码块只会执行一次。
+dispatch_once_t变量需要在代码的逻辑上只初始化一次，并且在后续的调用中保持不变。为了达到这个目的，我们使用了dispatch_once函数来执行初始化操作。
+dispatch_once函数接受一个指向dispatch_once_t变量的指针和一个代码块作为参数。它会检查dispatch_once_t变量的值，如果为零，则执行代码块，并将dispatch_once_t变量的值设置为非零；如果不为零，则说明代码块已经执行过，不再执行。
+    */
++ (instancetype)shareInstance{
+    static BNBasicDataService *shareInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shareInstance = [[super allocWithZone:NULL] init];
+//        shareInstance = [[self alloc] init];
+    });
+    return shareInstance;
+    
+}
+```
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.经常需要编写 “只需执行一次的线程安全代码”。通过 GCD 所提供的 dispatch_once 函数，很容易就能实现此功能。
+2.标记应该声明在 static 或 global 作用域中，这样的话，在把只需执行一次的块传给 dispatch_once 函数时，传进去的标记也是相同的。
 ```
 ---
 
-### 第35条：用“僵尸对象”调试内存管理问题
+### 第46条：不要使用 dispatch_get_current_queue
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+该函数在 iOS 6.0 及以后的版本已被弃用。
+
+---
+
+# 第7章：系统框架
+<a id="7"></a>
+
+### 第47条：熟悉系统框架
+
+列举常用的几种系统库：
+```
+CFNetwork : 提供 C 语言级别的网络通信能力
+CoreAudo : 提供 C 语言级别的API来操作设备上的音频硬件
+CoreData : 操作 SQLite 数据库
+CoreText : 高效执行文字排版和渲染
+```
+
+直接使用上述框架无法使用 ARC 自动管理内存。
+```
+CoreAnimation : Objective-C 开发的动画库
+CoreGraphics : C 语言开发的2D渲染所必备的数据结构和函数。其中定义了我们耳熟能详的 CGPoint 、CGSize 、 CGRect 等数据结构
+```
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.许多系统框架都可以直接使用，其中最重要的是 Foundation 与 CoreFoundation , 这两个框架提供了构建应用程序所需的许多核心功能
+2.很多常见任务都能用框架来做，例如音频与视频处理，网络通信、数据管理等
+3.请记住：用纯 C 写成的框架与用 Objective-C 写成的一样重要，若想成为优秀的 Objective-C 开发者，应该掌握 C 语言的核心概念
 ```
 ---
 
-### 第35条：用“僵尸对象”调试内存管理问题
+### 第48条：多用块枚举，少用 for 循环
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+OC 提供了如下几种遍历方式用以提高效率和增强易读性
+
+1.**NSEnumerator**
+
+其优势是可遍历 OC 中所有的集合类型，可读性更强
+```
+- (void)testEnumerator {
+    NSArray *array = @[@1,@2,@3];
+    NSDictionary *dictionary = @{
+                                 @"key1":@"value1",
+                                 @"key2":@"value2",
+                                 @"key3":@"value3"
+                                 };
+    NSSet *set = [NSSet setWithObjects:@4,@5,@6, nil];
+    /// array
+    NSEnumerator *arrayEnumerator = [array objectEnumerator];
+    id object;
+    while ((object = arrayEnumerator.nextObject) != nil) {
+        NSLog(@"array-%@",object);
+    }
+    
+    /// dictionary
+    NSEnumerator *dictionaryEnumerator = [dictionary keyEnumerator];
+    id value,key;
+    while ((key = dictionaryEnumerator.nextObject) != nil) {
+        value = dictionary[key];
+        NSLog(@"dictionary - key:%@  value:%@",key,value);
+    }
+    
+    /// set
+    NSEnumerator *setEnumerator = [set objectEnumerator];
+    id setObject;
+    while ((setObject = setEnumerator.nextObject) != nil) {
+        NSLog(@"set - %@",setObject);
+    }
+}
+```
+
+2.**快速遍历**
+
+快速遍历代码更简洁，而且更高效，缺点是遍历数组时无法获取当前对象所对应的下标
+```
+- (void)testForIn {
+    NSArray *array = @[@1,@2,@3];
+    NSDictionary *dictionary = @{
+                                 @"key1":@"value1",
+                                 @"key2":@"value2",
+                                 @"key3":@"value3"
+                                 };
+    NSSet *set = [NSSet setWithObjects:@4,@5,@6, nil];
+    /// array
+    for (NSNumber *obj in array) {
+        NSLog(@"array - %@",obj);
+    }
+    
+    /// dictionary
+    for (NSString *key in dictionary) {
+        NSLog(@"dictionary - key:%@  value:%@",key,dictionary[key]);
+    }
+    
+    /// set
+    for (NSNumber *setObject in set) {
+        NSLog(@"set - %@",setObject);
+    }
+}
+```
+
+3.**基于块的遍历方式**
+
+其优势是代码简洁， 可获取集合中的更多信息，包括数组的下标、字典的key和value，并且能够修改块的方法签名，以免进行类型转换，其中 stop 参数可手动终止遍历- *stop = YES
+```
+- (void)testBlockEnum {
+    NSArray *array = @[@1,@2,@3];
+    NSDictionary *dictionary = @{
+                                 @"key1":@"value1",
+                                 @"key2":@"value2",
+                                 @"key3":@"value3"
+                                 };
+    NSSet *set = [NSSet setWithObjects:@4,@5,@6, nil];
+    /// array
+    [array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSLog(@"array - idx:%zd - obj:%@",idx,obj);
+    }];
+    
+    /// dictionary
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        NSLog(@"dictionary - key:%@  value:%@",key,obj);
+    }];
+    
+    /// set
+    [set enumerateObjectsUsingBlock:^(id  _Nonnull obj, BOOL * _Nonnull stop) {
+        NSLog(@"set - %@",obj);
+    }];
+}
+```
+
+---
+
+### 第49条：对自定义其内存管理语义的 collection 使用无缝桥接
+
+// mark一下，没用过，也没看懂
+
+下面代码展示了简单的无缝桥接：
+```
+NSArray *anNSArray = @[@1, @2, @3, @4, @5];
+CFArrayRef aCFArray = (__bridge CFArrayRef)anNSArray;
+NSLog(@"Size of array = %li", CFArrayGetCount(aCFArray));
+// Output: Size of array = 5
+// 转换操作中的__bridge告诉ARC如何传力转换所涉及的OC对象，也就是ARC仍然具备这个OC对象的所有权。__bridge_retained与之相反。这里要注意用完了数组要自己释放。
+```
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.通过无缝桥接技术，可以在 Foundation 框架中的 Objective-C 对象与 CoreFoundation 框架中的 C 语言数据结构之间来回转换
+2.在 CoreFoundation 层面创建 collection 时，可以指定许多回调函数，这些函数表示此 collection 应如何处理其元素。然后，可运用无缝桥接技术，将其转换成具备特殊内存管理语义的 Objective-C collection
 ```
 ---
 
-### 第35条：用“僵尸对象”调试内存管理问题
+### 第50条：构建缓存时选用 NSCache 而非 NSDictionary
 
-weak不会使引用计数+1，避免**循环强引用使得保留环内的所有对象均无法正常释放**而**导致内存泄漏**。
+NSCache 在系统资源将要耗尽时，它会自动删减缓存，并且优先删减 “最久未使用的” 对象。还有一点是 NSCache 是线程安全的。
+
+```
+- (void)testNSPurgeableData {
+
+    NSCache *cache = [[NSCache alloc] init];
+    cache.countLimit = 100;//最大缓存数
+    cache.totalCostLimit = 5 * 1024 * 1024;//最大缓存 5M
+    
+    NSString *key = @"key";
+
+    /// 存
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSLog(@"正在下载一个很大的数据...");
+        NSData *data = [NSMutableData dataWithLength:1024 * 512];/// 下载完了
+        NSPurgeableData *purgeableData = [NSPurgeableData dataWithData:data]; // 此时引用计数自动加 1
+        [cache setObject:purgeableData forKey:key cost:purgeableData.length];
+        NSLog(@"使用data搞事情...");
+        [purgeableData endContentAccess];//NSPurgeableData 引用计数 -1
+    });
+    
+    /// 取
+    NSPurgeableData *purgeableDataInCache = [cache objectForKey:key];
+    if (purgeableDataInCache) {
+        [purgeableDataInCache beginContentAccess];
+        NSLog(@"使用data搞事情...");
+        [purgeableDataInCache endContentAccess]; 
+    }
+    
+}
+```
 
 ```
 要点：
-1.捕获异常时，一定要注意将 try 块内所创立的对象清理干净
-2.在默认情况下，ARC不生成安全处理异常所需的清理代码，开启编译器标志后，可生产这种代码，不过会导致应用程序变大，而且会降低运行效率
+1.实现缓存时应选用 NSCache 而非 NSDictionary对象，因为 NSCache 可以提供优雅的自动删减功能，而且是“线程安全的”，此外，它与字典不同，并不会拷贝键。
+2.可以给 NSCache 对象设置上限，用以限制缓存中对象的总个数及 “总成本”，而这些尺度则定义了缓存删减其中对象的时机。但是绝对不要把这些尺度当成可靠的 “硬限制”， 它们仅对 NSCache 起指导作用
+3.将 NSPurgeableData 与 NSCache 搭配使用, 可实现自动清除数据的功能，也就是说，当 NSPurgeableData 对象所占内存为系统所丢弃时，该对象自身也会从缓存中移除
+4.如果缓存使用得当，那么应用程序的相应速度就能提高。只有那种“重新计算起来很费事”数据，才值得放入缓存，比如那些需要从网络获取或从磁盘读取的数据。
 ```
 ---
+
+### 第51条：精简 initialize 和 load 的实现代码
+
+**load**中的注意点：
+
+1.当类和分类载入系统时就会调用load方法，
+
+2.如果某个类和其分类均实现了load方法，则会先调用类里的再调用分类里的。
+
+3;在load方法内使用其他类是不安全的，因为调用时其他类可能还没有加载好。load应只用于调试，而非执行任务。
+
+4.若本类不实现该方法，无论其父类是否实现均不会调用。
+
+**initialize**中的注意点：
+
+1.initialize方法则是初次使用该类时调用。若程序生命周期不使用该类，则不会调用。
+
+2.如果某个类的initizalize实现代码很复杂，其中用到了别的类。若那些类还没初始化，就会强迫他们初始化。
+
+3.initialize方法只应该用来设置内部数据。ClassA和ClassB在initialize方法中调用对方的某个方法。若A或B内部的数据还没准备好，代码无法正常运行。即便是本类自己的方法也别调用。
+
+4.若本类不实现该方法，若其父类实现了就会调用，所以一般在不实现该方法时，要在其父类这样做：
+
+```
++ (void)initialize
+{
+    if (self == [<#ClassName#> class]) {
+        <#statements#>
+    }
+}
+```
+
+```
+要点：
+1.在加载阶段，如果类实现了 load 方法，那么系统就会调用它。分类里也可以定义此方法，类的 load 方法要比分类中的先调用。与其他方法不同，load 方法不参与覆写机制
+2.首次使用某个类之前，系统会向其发送 initialize 消息。由于此方法遵从普通的覆写规则，所以通常应该在里面判断当前要初始化的是哪个类。
+load 与 initialize 方法都应该实现的精简一些。这有助于保持应用程序的相应能力，也能减少“依赖环”的几率
+3.无法再编译期设定的全局变量，可以放在 initialize 方法里初始化 // 整数可以在编译期定义 ，可变数组不行 ，因为它是个Objective-C对象，所以创建实例之前必领先激活运行期系统。
+```
+---
+
+###  第52条：别忘了 NSTimer 会保留其目标对象
+
+
+创建计时器并将其绑定到目标对象上。目标对象是 self，即当前实例。**计时器对目标对象（即self）进行强引用，以确保在计时器运行期间，目标对象不会被释放。同时，目标对象的实例变量也对计时器进行强引用，以确保计时器对象在实例存活期间不会被释放。**
+
+为了避免循环引用问题，可以采取以下解决方案之一：
+
+1.手动释放计时器：在适当的时机手动释放计时器，例如在不再需要计时器时，调用 invalidate 方法来停止计时器并释放其资源。但是随着某套公开的API对外发布给其他开发者，无法保证他们一定会调用此方法。
+
+2.通过“块”解决：因为timer的target是NSTimer类对象，是个单例。
+
+```
+#import <Foundation/Foundation.h>
+//.h
+@interface NSTimer (EOCBlocksSupport)
+
++ (NSTimer*)eoc_scheduledTimerWithTimeInterval:(NSTimeInterval)interval
+                                         block:(void(^)())block
+                                         repeats:(BOOL)repeats;
+@end
+//.m
+@implementation NSTimer (EOCBlocksSupport)
+
++ (NSTimer*)eoc_scheduledTimerWithTimeInterval:(NSTimeInterval)interval
+                                         block:(void(^)())block
+                                        repeats:(BOOL)repeats
+{
+             return [self scheduledTimerWithTimeInterval:interval
+                                                  target:self
+                                                selector:@selector(eoc_blockInvoke:)
+                                                userInfo:[block copy]
+                                                 repeats:repeats];
+
+}
++ (void)eoc_blockInvoke:(NSTimer*)timer {
+     void (^block)() = timer.userInfo;
+         if (block) {
+             block();
+        }
+}
+@end
+```
+
+3.weak弱引用
+```
+假设上述block中捕获了目标对象（^{[self doSomething]}），而userInfo保留了block，结果和“target为目标对象”相同，又出现了保留环。
+此时应当对self进行weak修饰：
+__weak EOCClass *weakSelf = self;
+[NSTimer eoc_scheduledTimerWithTimeInterval:5.0
+                                      block:^{
+                                        EOCClass *strongSelf = weakSelf;
+                                        [strongSelf doSomething];
+                                      }
+                                    repeats:YES];
+```
+
+```
+要点：
+1.NSTimer 对象会保留其目标，直到计时器本身失效为止，调用 invalidate 方法可令计时器失效，另外，一次性的计时器在触发完任务之后也会失效
+2.反复执行任务的计时器很容易引入保留环，如果这种计时器的目标对象又保留了计时器本身，那肯定会导致保留环。这种环状保留关系，可能是直接发生的，也可能是通过对象图里的其他对象间接发生的。
+3.可以扩充 NSTimer 的功能, 用 “block” 来打破保留环。不过，除非 NSTimer 将来在公共接口里提供此功能，否则必须创建分类，将相关实现代码加入其中。
+```
+---
+
+笔者结合原书，选取四篇总结文章，总结出这些内容并呈现给大家。一定会有一些遗漏或者错误，望不吝赐教。
+
+[mail to me.](mailto:chieh504@qq.com)
