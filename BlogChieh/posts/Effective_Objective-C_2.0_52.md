@@ -47,12 +47,10 @@ Objective-C 的重要工作都由 “运行期组件”（runtime component） �
 
 ```
 NSString *someString = @"The string";
-
-// someString 变量指向分配在堆里的某块内存，其中含有一个 NSString 对象（实例）
-
 NSString *anotherString = someString;
 
-// 不会拷贝对象，只会拷贝指针，浅拷贝。
+// someString 是一个指向NSString对象的指针，这个指针变量 someString 的值是一个内存地址，指向 NSString 对象的存储位置。‘*’是一个解引用操作符，它可以获取该指针指向的对象，*someString 就是指针someString指向的NSString对象
+// 将 someString 所存储的内存地址（即 someString 指向的 NSString 对象的地址）复制到 anotherString。不会拷贝对象，只会拷贝指针，浅拷贝。
 ```
 
 声明了一个 someString 变量，其类型是 NSString* ，也就是说，此变量是指向 NSString 的指针，也就是在堆中的 @"The string"。所有 Objective-C 语言的对象都必须这样声明，因为对象所占内存总是分配在“堆空间”（heap space）中，指针存储在栈中，每个指针占用4字节（32位架构），指针所在的内存里的值就是 NSString 实例的内存地址。
@@ -273,6 +271,10 @@ Objective-C运行期环境：当应用程序运行起来以后，为其提供相
 1.定义对外开放的属性时候尽量做到**暴露权限最小化**，不希望被修改的属性要加上readonly。
 
 2.atomic并不能保证多线程安全，例如一个线程连续多次读取某个属性的值，而同时还有别的线程在修改这个属性值得时候，也还是一样会读到不同的值。atomic的原理只是在setter and getter方法中加了一个@synchronized(self)，所以iOS开发中属性都要声明为nonatomic,因为atomic严重影响了性能，但是在Mac_OS_X上开发却通常不存在这个性能问题。
+
+```
+self.num = self.num + 1 并不是原子操作，其包含了取值、加1、赋值三个操作。atomic只能保证取值和赋值的原子性操作。
+```
 
 [属性修饰符的属性和具体使用请看这章](https://chiehwang.top/oc_foundation)
 
@@ -1082,7 +1084,7 @@ static const char *kFriendsPropertyKey = “kFriendsPropertyKey”;
 
 ### 第28条：通过协议提供匿名对象
 
-协议定义了一系列方法，遵从此协议的对象应该实现它们（如果这些方法不是可选的, 那么就必须实现)。于是，我们可以用协议把自己所写的API之中的实现细节隐藏起来，将返回的对象设计为遵从此协议的纯id类型。这样的话，想要隐藏的类名就不会出现在API之中了。若是接口背后有多个不同的实现类，而你又不想指明具体使用哪个类，那么可以考虑用这个办法——因为有时候这些类可能会变，有时候它们又无法容纳于标准的类继承体系中，因而不能以某个公共基类来统一表示。
+协议定义了一系列方法，遵从此协议的对象应该实现它们（如果这些方法不是可选的, 那么就必须实现）。于是，我们可以用协议把自己所写的API之中的实现细节隐藏起来，将返回的对象设计为遵从此协议的纯id类型。这样的话，想要隐藏的类名就不会出现在API之中了。若是接口背后有多个不同的实现类，而你又不想指明具体使用哪个类，那么可以考虑用这个办法——因为有时候这些类可能会变，有时候它们又无法容纳于标准的类继承体系中，因而不能以某个公共基类来统一表示。
 
 `@property (nonatomic, weak) id <XxxDelegate> delegate;`
 
@@ -1102,7 +1104,6 @@ Objective-C 的内存管理没那么复杂，有了“自动引用计数”(Auto
 ### 第29条：理解引用计数
 
 ![](/i/arc.image)
-
 
 | 场景       | 对应OC的动作 | 对应OC的方法                       |
 |------------|--------------|------------------------------------|
@@ -1536,7 +1537,7 @@ NSBlockOperation *showInUIOperation = [NSBlockOperation blockOperationWithBlock:
 
 - (void)testGCDGroup {
     dispatch_group_t group = dispatch_group_create();
-    dispatch_queue_t queue = dispatch_queue_create("com.qiuxuewei.q", DISPATCH_QUEUE_CONCURRENT);//并行
+    dispatch_queue_t queue = dispatch_queue_create("com.qiuxuewei.q", DISPATCH_QUEUE_CONCURRENT); //并行
     dispatch_group_async(group, queue, ^{
         for (NSUInteger i = 0; i < 10; i++) {
             sleep(0.5);
@@ -1768,6 +1769,7 @@ NSCache 在系统资源将要耗尽时，它会自动删减缓存，并且优先
     NSString *key = @"key";
 
     /// 存
+    // 并发
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSLog(@"正在下载一个很大的数据...");
         NSData *data = [NSMutableData dataWithLength:1024 * 512];/// 下载完了

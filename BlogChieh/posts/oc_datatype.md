@@ -1,12 +1,14 @@
 ---
-title: Objective-C 基本数据类型
+title: Objective-C 数据类型
 publish_date: 2022-12-26
 ---
 
-Let's go!
+Objective-C中有三种数据类型：基本数据类型、对象数据类型和id数据类型。
 
 `背景：Objective-C是在C语言基础上拓展出的新语言，所以它是完全兼容C语言代码的，C语言中的基本数据类型如int、float、double和char在Objective-C中是完全可以正常使用的。除此之外，Objective-C还拓展了一些新的数据。oc中类分为不可变类和可变（mutable）类，它们创建的对象也是，下面列出了Foundation框架中主要的可变类和不可变类：`
+
 ![](/i/22d9be3a-5d17-4723-879e-878bca3650bc.jpg)
+
 ---
 
 参考资料：

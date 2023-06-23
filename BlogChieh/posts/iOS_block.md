@@ -1,9 +1,11 @@
 ---
 title: iOS block
-publish_date: 2023-06-07
+publish_date: 2022-12-27
 ---
 
 # block应用
+
+// 结合他人博客和社区文章
 
 ## block类型：
 ```
@@ -19,6 +21,7 @@ publish_date: 2023-06-07
 | NSMallocBlock（堆Block）   | NSStackBlock调用了copy       | 堆区   | 引用计数加1               |
 
 ## block循环引用
+
 ```
 正常释放：是指A持有B的引用，当A调用dealloc方法，给B发送release信号，B收到release信号，如果此时B的retainCount（即引用计数）为0时，则调用B的dealloc方法。
 循环引用：A、B相互持有，所以导致A无法调用dealloc方法给B发送release信号，而B也无法接收到release信号。所以A、B此时都无法释放。
@@ -54,7 +57,7 @@ typedef void(^CJLBlock)(void);
 
 ```
 方式一：weak-stong-dance
-1.如果block内部并未嵌套block，直接使用__weak修饰self即可。此时的weakSelf 和 self 指向同一片内存空间，且使用__weak不会导致self的引用计数发生变化。
+1.如果block内部并未嵌套block，直接使用__weak修饰self即可。此时的weakSelf和self指向同一片内存空间，且使用__weak不会导致self的引用计数发生变化。
 
 __weak typeof(self) weakSelf = self;
 self.cjlBlock = ^(void){

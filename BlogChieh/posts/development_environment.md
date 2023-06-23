@@ -128,19 +128,50 @@ sudo arch -x86_64 gem install ffi
 arch -x86_64 pod install
 ```
 
+```
+CocoaPods工作流程：
+
++-----------------+     +-------------------+      +---------------------+
+|                 |     |                   |      |                     |
+| Podfile         | --> | CocoaPods Specs   |  --> | Individual Git Repo |
+| (in your        |     | Repo (on GitHub)  |      | (on GitHub or other |
+| Xcode project)  |     |                   |      | VCS hosting)        |
+|                 |     |                   |      |                     |
++-----------------+     +-------------------+      +---------------------+
+         |                      |                             |
+         |                      |                             |
+         V                      V                             V
++-----------------+     +-------------------+      +---------------------+
+|                 |     |                   |      |                     |
+| pod install     |     | Download pod      |      | Fetch source code   |
+| command         |     |                   |      |                     |
+|                 |     |                   |      |                     |
++-----------------+     +-------------------+      +---------------------+
+         |                      |                             |
+         |                      |                             |
+         V                      V                             V
++-----------------+     +-------------------+      +---------------------+
+|                 |     |                   |      |                     |
+| Your Xcode      | <-- | Pods/ directory   |  <-- | Source code         |
+| Workspace       |     | (in your project) |      |                     |
+| (.xcworkspace)  |     |                   |      |                     |
+|                 |     |                   |      |                     |
++-----------------+     +-------------------+      +---------------------+
+
+```
 ---
 
 ### pod init 模版:
 
 ```
 platform :ios, '9.0'
-target 'XXProject' do
+target 'ChiehProject' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
     pod 'SDWebImage'
     pod 'SVGKit', :git => 'https://github.com/SVGKit/SVGKit.git', :branch => '3.x'
     pod 'zhPopupController', '~> 2.0'
-  # Pods for BNMemoryCurveProject
+  # Pods for ChiehProject
 end
 ```
 

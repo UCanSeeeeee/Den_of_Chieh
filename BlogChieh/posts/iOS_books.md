@@ -11,13 +11,15 @@ publish_date: 2023-01-06
 
 《Objective-C基础教程：1天玩转Objective-C语法》  
 
-// 已阅：非常基础，很好。
+// 已阅：非常基础，很好。适合初学者了解iOS。
 
 《Objective-C编程全解》
 
 《[禅与 Objective-C 编程艺术](https://objc-zen-book.books.yourtion.com/)》
 
 《Effective Objective-C 2.0 编写高质量iOS与OS X代码的52个有效方法》
+
+// 已阅：喜欢这种陈述方式
 
 《编写高质量代码：改善Objective-C程序的61个建议》
 
